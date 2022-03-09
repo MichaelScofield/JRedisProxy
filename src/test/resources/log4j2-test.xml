@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %p [%t] %c{1}:%L - %m%n"/>
+        </Console>
+
+        <RollingFile name="proxy-monitor" fileName="/tmp/proxy-monitor.log"
+                     filePattern="/tmp/logs/proxy-monitor-%d{yyyy-MM-dd-HH}-%i.log.gz">
+            <PatternLayout pattern="%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="proxy-timeout" fileName="/tmp/proxy-timeout.log"
+                     filePattern="/tmp/logs/proxy-timeout-%d{yyyy-MM-dd-HH}-%i.log.gz">
+            <PatternLayout pattern="%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="cmd-lifecycle-pct" fileName="/tmp/cmd-lifecycle-pct.log"
+                     filePattern="/tmp/logs/cmd-lifecycle-pct-%d{yyyy-MM-dd-HH}-%i.log.gz">
+            <PatternLayout pattern="%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="org.jrp" level="info" additivity="false">
+            <AppenderRef ref="STDOUT"/>
+        </Logger>
+
+        <Logger name="proxy-monitor" level="info" additivity="false">
+            <AppenderRef ref="proxy-monitor"/>
+        </Logger>
+
+        <Logger name="proxy-timeout" level="info" additivity="false">
+            <AppenderRef ref="proxy-timeout"/>
+        </Logger>
+
+        <Logger name="cmd-lifecycle-pct" level="info" additivity="false">
+            <AppenderRef ref="cmd-lifecycle-pct"/>
+        </Logger>
+
+        <Root level="info">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+    </Loggers>
+</Configuration>

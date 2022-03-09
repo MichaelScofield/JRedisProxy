@@ -1,0 +1,17 @@
+---
+port: 16379
+name: redisproxy_test
+slowlogLogSlowerThan: 20
+handlerThreads: 1
+hugeCommandThreshold: 100
+hugeReplyThreshold: 200
+renameCommands:
+  monitor: "whatareyoudoing"
+  keys: ""
+useNettyEpoll: true
+backlog: 1024
+ioThreads: 2
+readOnly: true
+useIdleStateHandler: true
+redisServerLoader: org.jrp.server.loader.RedisproxyAsyncServerLoader
+maxQueuedCommands: 1024
