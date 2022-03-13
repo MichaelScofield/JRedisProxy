@@ -66,6 +66,16 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
+    public Reply getdel(byte[] key) throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
+    public Reply getex(byte[] key, byte[][] options) throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
     public Reply getbit(byte[] key, byte[] offset) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
@@ -86,7 +96,7 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public IntegerReply msetnx(byte[][] key_or_value) throws RedisException {
+    public Reply msetnx(byte[][] keysAndValues) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 
@@ -96,7 +106,7 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply set(byte[] key0, byte[] value1, byte[][] attributes) throws RedisException {
+    public Reply set(byte[] key, byte[] value1, byte[][] options) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 
@@ -123,6 +133,11 @@ public abstract class AbstractRedisServer implements RedisServer {
     @Override
     public Reply strlen(byte[] key) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
+    public Reply substr(byte[] key, byte[] start, byte[] end) throws RedisException {
+        return getrange(key, start, end);
     }
 
     @Override

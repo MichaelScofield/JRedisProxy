@@ -3,6 +3,8 @@ package org.jrp.server;
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jrp.client.lettuce.LettuceRedisClient;
 import org.jrp.cmd.RedisKeyword;
 import org.jrp.config.ProxyConfig;
@@ -17,9 +19,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.jrp.cmd.RedisKeyword.*;
 import static org.jrp.utils.BytesUtils.*;
 
 public class RedisproxyAsyncServer extends AbstractRedisServer {
+
+    private static final Logger LOGGER = LogManager.getLogger(RedisproxyAsyncServer.class);
 
     private final LettuceRedisClient lettuceRedisClient;
 
@@ -56,8 +61,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply append(byte[] rawkey, byte[] value) {
-        RedisFuture<Long> future = getRedisClient().append(rawkey, value);
+    public Reply append(byte[] key, byte[] value) {
+        RedisFuture<Long> future = getRedisClient().append(key, value);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -89,14 +94,14 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply decr(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().decr(rawkey);
+    public Reply decr(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().decr(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply decrby(byte[] rawkey, byte[] decrement) {
-        RedisFuture<Long> future = getRedisClient().decrby(rawkey, toLong(decrement));
+    public Reply decrby(byte[] key, byte[] decrement) {
+        RedisFuture<Long> future = getRedisClient().decrby(key, toLong(decrement));
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -107,8 +112,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply incrbyfloat(byte[] rawkey, byte[] amount) {
-        RedisFuture<Double> future = getRedisClient().incrbyfloat(rawkey, toDouble(amount));
+    public Reply incrbyfloat(byte[] key, byte[] increment) {
+        RedisFuture<Double> future = getRedisClient().incrbyfloat(key, toDouble(increment));
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
@@ -120,6 +125,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
 
     @Override
     public Reply mset(byte[][] keysAndValues) {
+        //noinspection DuplicatedCode
         if (keysAndValues.length % 2 != 0) {
             return new ErrorReply("ERR wrong number of arguments for MSET");
         }
@@ -132,65 +138,66 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
+    public Reply msetnx(byte[][] keysAndValues) {
+        //noinspection DuplicatedCode
+        if (keysAndValues.length % 2 != 0) {
+            return new ErrorReply("ERR wrong number of arguments for MSET");
+        }
+        Map<byte[], byte[]> map = new HashMap<>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            map.put(keysAndValues[i], keysAndValues[i + 1]);
+        }
+        RedisFuture<Boolean> future = getRedisClient().msetnx(map);
+        return new FutureReply<>(future, IntegerReply::integer);
+    }
+
+    @Override
     public Reply psetex(byte[] rawkey, byte[] milliseconds, byte[] value) {
         RedisFuture<String> future = getRedisClient().psetex(rawkey, toLong(milliseconds), value);
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
     @Override
-    public Reply set(byte[] rawkey, byte[] value, byte[][] attributes) throws RedisException {
-        RedisFuture<String> future = attributes == null ?
-                getRedisClient().set(rawkey, value) :
-                getRedisClient().set(rawkey, value, getSetArgs(attributes));
+    public Reply set(byte[] key, byte[] value, byte[][] options) throws RedisException {
+        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
+        RedisFuture<String> future;
+        if (options == null) {
+            future = client.set(key, value);
+        } else {
+            SetArgs setArgs = new SetArgs();
+            boolean hasExPx = false;
+            boolean hasNxXx = false;
+            for (int i = 0, l = options.length; i < l; i++) {
+                RedisKeyword keyword = RedisKeyword.convert(options[i]);
+                if (keyword == EX || keyword == PX || keyword == EXAT || keyword == PXAT || keyword == KEEPTTL) {
+                    if (hasExPx) {
+                        throw RedisException.SYNTAX_ERROR;
+                    }
+                    switch (keyword) {
+                        case EX -> setArgs.ex(toLong(options[++i]));
+                        case PX -> setArgs.px(toLong(options[++i]));
+                        case EXAT -> setArgs.exAt(toLong(options[++i]));
+                        case PXAT -> setArgs.pxAt(toLong(options[++i]));
+                        case KEEPTTL -> setArgs.keepttl();
+                    }
+                    hasExPx = true;
+                } else if (keyword == NX || keyword == XX) {
+                    if (hasNxXx) {
+                        throw RedisException.SYNTAX_ERROR;
+                    }
+                    switch (keyword) {
+                        case NX -> setArgs.nx();
+                        case XX -> setArgs.xx();
+                    }
+                    hasNxXx = true;
+                } else {
+                    throw RedisException.SYNTAX_ERROR;
+                }
+            }
+            future = client.set(key, value, setArgs);
+        }
         return new FutureReply<>(future,
                 s -> s == null ? BulkReply.NIL_REPLY : SimpleStringReply.from(s));
-    }
-
-    private SetArgs getSetArgs(byte[][] attributes) throws RedisException {
-        boolean hasNX = false;
-        boolean hasXX = false;
-        long expireMilliseconds = -1;
-        for (int i = 0, l = attributes.length; i < l; i++) {
-            String attribute = string(attributes[i]).toUpperCase();
-            switch (attribute) {
-                case "EX":
-                    if (i + 1 < l) {
-                        expireMilliseconds = toLong(attributes[++i]) * 1000L;
-                    } else {
-                        throw RedisException.SYNTAX_ERROR;
-                    }
-                    break;
-                case "PX":
-                    if (i + 1 < l) {
-                        expireMilliseconds = toLong(attributes[++i]);
-                    } else {
-                        throw RedisException.SYNTAX_ERROR;
-                    }
-                    break;
-                case "NX":
-                    hasNX = true;
-                    break;
-                case "XX":
-                    hasXX = true;
-                    break;
-                default:
-                    throw RedisException.SYNTAX_ERROR;
-            }
-        }
-        if (hasNX && hasXX) {
-            throw RedisException.SYNTAX_ERROR;
-        }
-        SetArgs setArgs = new SetArgs();
-        if (hasNX) {
-            setArgs.nx();
-        }
-        if (hasXX) {
-            setArgs.xx();
-        }
-        if (expireMilliseconds != -1) {
-            setArgs.px(expireMilliseconds);
-        }
-        return setArgs;
     }
 
     @Override
@@ -200,26 +207,26 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply setex(byte[] rawkey, byte[] seconds, byte[] value) {
-        RedisFuture<String> future = getRedisClient().setex(rawkey, toLong(seconds), value);
+    public Reply setex(byte[] key, byte[] seconds, byte[] value) {
+        RedisFuture<String> future = getRedisClient().setex(key, toLong(seconds), value);
         return new FutureReply<>(future, SimpleStringReply::from);
     }
 
     @Override
-    public Reply setnx(byte[] rawkey, byte[] value) {
-        RedisFuture<Boolean> future = getRedisClient().setnx(rawkey, value);
+    public Reply setnx(byte[] key, byte[] value) {
+        RedisFuture<Boolean> future = getRedisClient().setnx(key, value);
         return new FutureReply<>(future, IntegerReply::integer);
     }
 
     @Override
-    public Reply setrange(byte[] rawkey, byte[] offset, byte[] value) {
-        RedisFuture<Long> future = getRedisClient().setrange(rawkey, toLong(offset), value);
+    public Reply setrange(byte[] key, byte[] offset, byte[] value) {
+        RedisFuture<Long> future = getRedisClient().setrange(key, toLong(offset), value);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply strlen(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().strlen(rawkey);
+    public Reply strlen(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().strlen(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -946,26 +953,26 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply getrange(byte[] rawkey, byte[] start, byte[] end) {
-        RedisFuture<byte[]> future = getRedisClient().getrange(rawkey, toLong(start), toLong(end));
+    public Reply getrange(byte[] key, byte[] start, byte[] end) {
+        RedisFuture<byte[]> future = getRedisClient().getrange(key, toLong(start), toLong(end));
         return new FutureReply<>(future, BulkReply::new);
     }
 
     @Override
-    public Reply getset(byte[] rawkey, byte[] value) {
-        RedisFuture<byte[]> future = getRedisClient().getset(rawkey, value);
+    public Reply getset(byte[] key, byte[] value) {
+        RedisFuture<byte[]> future = getRedisClient().getset(key, value);
         return new FutureReply<>(future, BulkReply::new);
     }
 
     @Override
-    public Reply incr(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().incr(rawkey);
+    public Reply incr(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().incr(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply incrby(byte[] rawkey, byte[] amount) {
-        RedisFuture<Long> future = getRedisClient().incrby(rawkey, toLong(amount));
+    public Reply incrby(byte[] key, byte[] increment) {
+        RedisFuture<Long> future = getRedisClient().incrby(key, toLong(increment));
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -988,8 +995,41 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply get(byte[] rawkey) {
-        RedisFuture<byte[]> future = getRedisClient().get(rawkey);
+    public Reply get(byte[] key) {
+        RedisFuture<byte[]> future = getRedisClient().get(key);
+        return new FutureReply<>(future, BulkReply::bulkReply);
+    }
+
+    @Override
+    public Reply getdel(byte[] key) {
+        RedisFuture<byte[]> future = getRedisClient().getdel(key);
+        return new FutureReply<>(future, BulkReply::bulkReply);
+    }
+
+    @Override
+    public Reply getex(byte[] key, byte[][] options) {
+        GetExArgs args = new GetExArgs();
+        if (options != null) {
+            if (options.length == 1) {
+                if (RedisKeyword.convert(options[0]) != RedisKeyword.PERSIST) {
+                    return ErrorReply.SYNTAX_ERROR;
+                }
+                args = GetExArgs.Builder.persist();
+            } else if (options.length == 2) {
+                switch (RedisKeyword.convert(options[0])) {
+                    case EX -> args = GetExArgs.Builder.ex(toLong(options[1]));
+                    case PX -> args = GetExArgs.Builder.px(toLong(options[1]));
+                    case EXAT -> args = GetExArgs.Builder.exAt(toLong(options[1]));
+                    case PXAT -> args = GetExArgs.Builder.pxAt(toLong(options[1]));
+                    default -> {
+                        return ErrorReply.SYNTAX_ERROR;
+                    }
+                }
+            } else {
+                return ErrorReply.SYNTAX_ERROR;
+            }
+        }
+        RedisFuture<byte[]> future = getRedisClient().getex(key, args);
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 }

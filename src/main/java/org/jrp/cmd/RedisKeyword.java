@@ -12,21 +12,29 @@ public enum RedisKeyword {
     ASC,
     BEFORE,
     BY,
+    COUNT,
     DESC,
+    EX,
+    EXAT,
+    EXISTS,
     GET,
+    KEEPTTL,
     LIMIT,
     LIST,
+    LOAD,
+    MATCH,
     MAX,
     MIN,
+    NX,
+    PERSIST,
+    PX,
+    PXAT,
     SET,
     STORE,
     SUM,
     WEIGHTS,
     WITHSCORES,
-    MATCH,
-    COUNT,
-    LOAD,
-    EXISTS;
+    XX;
 
     private final byte[] name;
 

@@ -306,7 +306,7 @@ public class RedisCommandHandlerTest {
         }
 
         @Override
-        public Reply set(byte[] rawKey, byte[] rawVal, byte[][] attributes) {
+        public Reply set(byte[] rawKey, byte[] rawVal, byte[][] options) {
             data.put(string(rawKey), string(rawVal));
             return SimpleStringReply.OK;
         }

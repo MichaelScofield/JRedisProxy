@@ -10,12 +10,9 @@ import static org.jrp.cmd.RWType.Type.WRITE;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
-public interface RedisServer {
+public interface RedisServer extends RedisStringsServer {
 
     ProxyConfig getProxyConfig();
-
-    @RWType(type = WRITE)
-    Reply append(byte[] key, byte[] value) throws RedisException;
 
     @RWType(type = READ)
     Reply bitcount(byte[] key, byte[] start, byte[] end) throws RedisException;
@@ -23,62 +20,11 @@ public interface RedisServer {
     @RWType(type = WRITE)
     Reply bitop(byte[] operation, byte[] destkey, byte[][] keys) throws RedisException;
 
-    @RWType(type = WRITE)
-    Reply decr(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply decrby(byte[] key, byte[] decrement) throws RedisException;
-
-    @RWType(type = READ)
-    Reply get(byte[] key) throws RedisException;
-
     @RWType(type = READ)
     Reply getbit(byte[] key, byte[] offset) throws RedisException;
 
-    @RWType(type = READ)
-    Reply getrange(byte[] key, byte[] start, byte[] end) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply getset(byte[] key, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply incr(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply incrby(byte[] key, byte[] increment) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply incrbyfloat(byte[] key, byte[] increment) throws RedisException;
-
-    @RWType(type = READ)
-    Reply mget(byte[][] keys) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply mset(byte[][] keysAndValues) throws RedisException;
-
-    @RWType(type = WRITE)
-    IntegerReply msetnx(byte[][] key_or_value0) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply psetex(byte[] key, byte[] milliseconds, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply set(byte[] key, byte[] value, byte[][] attributes) throws RedisException;
-
     @RWType(type = WRITE)
     Reply setbit(byte[] key, byte[] offset, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply setex(byte[] key, byte[] seconds, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply setnx(byte[] key, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply setrange(byte[] key, byte[] offset, byte[] value) throws RedisException;
-
-    @RWType(type = READ)
-    Reply strlen(byte[] key) throws RedisException;
 
     SimpleStringReply auth(byte[] password) throws RedisException;
 
