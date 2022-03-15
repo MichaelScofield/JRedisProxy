@@ -12,6 +12,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.args.BitOP;
 import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.params.BitPosParams;
 import redis.clients.jedis.params.GetExParams;
 import redis.clients.jedis.params.SetParams;
 import redis.clients.jedis.params.ZParams;
@@ -89,10 +90,48 @@ public class RedisproxyAsyncServerTest {
     public void testBitcount() {
         String key = getRandomString();
         redis.set(key, "foobar");
-
         assertEquals(26, proxy.bitcount(key));
         assertEquals(4, proxy.bitcount(key, 0, 0));
         assertEquals(6, proxy.bitcount(key, 1, 1));
+    }
+
+    @Test
+    public void testBitfield() {
+        String k1 = getRandomString();
+        List<Long> bitfields1 = proxy.bitfield(k1, "INCRBY", "i5", "100", "1", "GET", "u4", "0");
+        assertArrayEquals(new Long[]{1L, 0L}, bitfields1.toArray());
+
+        String k2 = getRandomString();
+        List<Long> bitfields2 = proxy.bitfield(k2, "SET", "i8", "#0", "100", "SET", "i8", "#1", "100");
+        assertArrayEquals(new Long[]{0L, 0L}, bitfields2.toArray());
+
+        String k3 = getRandomString();
+        List<Long> bitfield3_1 = proxy.bitfield(k3,
+                "incrby", "u2", "100", "1", "OVERFLOW", "SAT", "incrby", "u2", "102", "1");
+        assertArrayEquals(new Long[]{1L, 1L}, bitfield3_1.toArray());
+        List<Long> bitfield3_2 = proxy.bitfield(k3,
+                "incrby", "u2", "100", "1", "OVERFLOW", "SAT", "incrby", "u2", "102", "1");
+        assertArrayEquals(new Long[]{2L, 2L}, bitfield3_2.toArray());
+        List<Long> bitfield3_3 = proxy.bitfield(k3,
+                "incrby", "u2", "100", "1", "OVERFLOW", "SAT", "incrby", "u2", "102", "1");
+        assertArrayEquals(new Long[]{3L, 3L}, bitfield3_3.toArray());
+        List<Long> bitfield3_4 = proxy.bitfield(k3,
+                "incrby", "u2", "100", "1", "OVERFLOW", "SAT", "incrby", "u2", "102", "1");
+        assertArrayEquals(new Long[]{0L, 3L}, bitfield3_4.toArray());
+    }
+
+    @Test
+    public void testBitpos() {
+        String k = getRandomString();
+        redis.set(bytes(k), new byte[]{(byte) 0xFF, (byte) 0xF0, (byte) 0x00});
+        assertEquals(12, proxy.bitpos(k, false));
+
+        redis.set(bytes(k), new byte[]{(byte) 0x00, (byte) 0xFF, (byte) 0xF0});
+        assertEquals(8, proxy.bitpos(k, true, new BitPosParams(0)));
+        assertEquals(16, proxy.bitpos(k, true, new BitPosParams(2)));
+
+        redis.set(bytes(k), new byte[]{(byte) 0x00, (byte) 0x00, (byte) 0x00});
+        assertEquals(-1, proxy.bitpos(k, true));
     }
 
     @Test

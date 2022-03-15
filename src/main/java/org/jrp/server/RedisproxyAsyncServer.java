@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static io.lettuce.core.BitFieldArgs.*;
 import static org.jrp.cmd.RedisKeyword.*;
 import static org.jrp.utils.BytesUtils.*;
 
@@ -67,11 +68,63 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply bitcount(byte[] rawkey, byte[] startBytes, byte[] endBytes) {
+    public Reply bitcount(byte[] key, byte[] startBytes, byte[] endBytes) {
         long start = startBytes == null ? 0 : toLong(startBytes);
         long end = endBytes == null ? -1 : toLong(endBytes);
-        RedisFuture<Long> future = getRedisClient().bitcount(rawkey, start, end);
+        RedisFuture<Long> future = getRedisClient().bitcount(key, start, end);
         return new FutureReply<>(future, IntegerReply::new);
+    }
+
+    @Override
+    public Reply bitfield(byte[] key, byte[][] options) throws RedisException {
+        BitFieldArgs args = options == null ? new BitFieldArgs() : parseBitFieldArgs(options);
+        RedisFuture<List<Long>> future = getRedisClient().bitfield(key, args);
+        return new FutureReply<>(future, MultiBulkReply::fromIntegers);
+    }
+
+    private BitFieldArgs parseBitFieldArgs(byte[][] options) throws RedisException {
+        BitFieldArgs args = new BitFieldArgs();
+        for (int i = 0; i < options.length; i++) {
+            switch (RedisKeyword.convert(options[i])) {
+                case GET -> {
+                    BitFieldType encoding = parseEncoding(string(options[++i]));
+                    Offset offset = parseOffset(string(options[++i]));
+                    args.get(encoding, offset);
+                }
+                case SET -> {
+                    BitFieldType encoding = parseEncoding(string(options[++i]));
+                    Offset offset = parseOffset(string(options[++i]));
+                    long value = toLong(options[++i]);
+                    args.set(encoding, offset, value);
+                }
+                case INCRBY -> {
+                    BitFieldType encoding = parseEncoding(string(options[++i]));
+                    Offset offset = parseOffset(string(options[++i]));
+                    long increment = toLong(options[++i]);
+                    args.incrBy(encoding, offset, increment);
+                }
+                case OVERFLOW -> args.overflow(OverflowType.valueOf(string(options[++i]).toUpperCase()));
+            }
+        }
+        return args;
+    }
+
+    private BitFieldType parseEncoding(String encoding) throws RedisException {
+        BitFieldType type;
+        if (encoding.charAt(0) == 'u') {
+            type = unsigned(Integer.parseInt(encoding.substring(1)));
+        } else if (encoding.charAt(0) == 'i') {
+            type = signed(Integer.parseInt(encoding.substring(1)));
+        } else {
+            throw RedisException.SYNTAX_ERROR;
+        }
+        return type;
+    }
+
+    private Offset parseOffset(String offset) {
+        return offset.charAt(0) == '#' ?
+                BitFieldArgs.typeWidthBasedOffset(Integer.parseInt(offset.substring(1))) :
+                BitFieldArgs.offset(Integer.parseInt(offset));
     }
 
     @Override
@@ -94,6 +147,13 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
+    public Reply bitpos(byte[] key, byte[] bit, byte[] start, byte[] end) {
+        RedisFuture<Long> future = getRedisClient().bitpos(key, bit[0] == '1',
+                start == null ? 0 : toLong(start), end == null ? -1 : toLong(end));
+        return new FutureReply<>(future, IntegerReply::new);
+    }
+
+    @Override
     public Reply decr(byte[] key) {
         RedisFuture<Long> future = getRedisClient().decr(key);
         return new FutureReply<>(future, IntegerReply::new);
@@ -106,8 +166,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply getbit(byte[] rawkey, byte[] offset) {
-        RedisFuture<Long> future = getRedisClient().getbit(rawkey, toLong(offset));
+    public Reply getbit(byte[] key, byte[] offset) {
+        RedisFuture<Long> future = getRedisClient().getbit(key, toLong(offset));
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -201,8 +261,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply setbit(byte[] rawkey, byte[] offset, byte[] value) {
-        RedisFuture<Long> future = getRedisClient().setbit(rawkey, toLong(offset), toInt(value));
+    public Reply setbit(byte[] key, byte[] offset, byte[] value) {
+        RedisFuture<Long> future = getRedisClient().setbit(key, toLong(offset), toInt(value));
         return new FutureReply<>(future, IntegerReply::new);
     }
 

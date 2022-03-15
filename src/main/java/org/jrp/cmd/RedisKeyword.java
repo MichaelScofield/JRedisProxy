@@ -17,7 +17,9 @@ public enum RedisKeyword {
     EX,
     EXAT,
     EXISTS,
+    FAIL,
     GET,
+    INCRBY,
     KEEPTTL,
     LIMIT,
     LIST,
@@ -26,14 +28,17 @@ public enum RedisKeyword {
     MAX,
     MIN,
     NX,
+    OVERFLOW,
     PERSIST,
     PX,
     PXAT,
+    SAT,
     SET,
     STORE,
     SUM,
     WEIGHTS,
     WITHSCORES,
+    WRAP,
     XX;
 
     private final byte[] name;

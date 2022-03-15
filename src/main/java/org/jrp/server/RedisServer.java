@@ -10,21 +10,9 @@ import static org.jrp.cmd.RWType.Type.WRITE;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringsServer {
+public interface RedisServer extends RedisStringsServer, RedisBitmapsServer {
 
     ProxyConfig getProxyConfig();
-
-    @RWType(type = READ)
-    Reply bitcount(byte[] key, byte[] start, byte[] end) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply bitop(byte[] operation, byte[] destkey, byte[][] keys) throws RedisException;
-
-    @RWType(type = READ)
-    Reply getbit(byte[] key, byte[] offset) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply setbit(byte[] key, byte[] offset, byte[] value) throws RedisException;
 
     SimpleStringReply auth(byte[] password) throws RedisException;
 

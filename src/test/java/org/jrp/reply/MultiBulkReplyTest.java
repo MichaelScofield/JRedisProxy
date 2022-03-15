@@ -7,16 +7,23 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.jrp.utils.BytesUtils.bytes;
 import static org.jrp.utils.BytesUtils.string;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MultiBulkReplyTest {
+
+    @Test
+    public void testCreateMultiBulkReplyFromIntegers() {
+        MultiBulkReply reply1 = MultiBulkReply.fromIntegers(new ArrayList<>());
+        assertEquals("", reply1.toString());
+        MultiBulkReply reply2 = MultiBulkReply.fromIntegers(Arrays.asList(1L, 2L, 3L));
+        ByteBuf buffer = Unpooled.buffer();
+        reply2.write(buffer);
+        assertEquals("*3\r\n:1\r\n:2\r\n:3\r\n", string(ByteBufUtil.getBytes(buffer)));
+    }
 
     @Test
     public void testCreateMultiBulkReplyFromBytesMap() {

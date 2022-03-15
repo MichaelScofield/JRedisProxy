@@ -46,7 +46,22 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
+    public Reply bitfield(byte[] key, byte[][] options) throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
+    public Reply bitfield_ro(byte[] key, byte[][] options) throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
     public Reply bitop(byte[] operation, byte[] destkey, byte[][] key) throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
+    public Reply bitpos(byte[] key, byte[] bit, byte[] start, byte[] end) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 

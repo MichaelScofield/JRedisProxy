@@ -62,6 +62,16 @@ public record MultiBulkReply(Reply[] replies) implements Reply {
         return new MultiBulkReply(replies);
     }
 
+    public static MultiBulkReply fromIntegers(List<Long> integers) {
+        if (integers == null || integers.isEmpty()) {
+            return multiBulkReply(Collections.emptyList());
+        }
+        IntegerReply[] replies = integers.stream()
+                .map(IntegerReply::integer)
+                .toArray(IntegerReply[]::new);
+        return new MultiBulkReply(replies);
+    }
+
     public static MultiBulkReply multiBulkReply(Collection<String> strings) {
         BulkReply[] replies = strings.stream()
                 .map(BulkReply::bulkReply)
