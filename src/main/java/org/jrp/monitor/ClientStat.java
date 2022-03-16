@@ -19,7 +19,7 @@ public class ClientStat {
 
     private static final Map<ChannelId, ClientStat> CLIENT_STATS = new ConcurrentHashMap<>();
 
-    private final long id;
+    public final long id;
     private final String addr;
     private int db;
 
@@ -92,7 +92,7 @@ public class ClientStat {
         lastActive = now;
     }
 
-    String dump() {
+    public String dump() {
         return "id=" + id + " " +
                 "addr=" + addr + " " +
                 "laddr=" + laddr + " " +
@@ -136,6 +136,10 @@ public class ClientStat {
 
     public void setFd(int fd) {
         this.fd = fd;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public void setName(String name) {

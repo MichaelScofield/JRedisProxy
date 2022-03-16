@@ -175,13 +175,40 @@ public abstract class AbstractRedisServer implements RedisServer {
 
     @Override
     public final Reply client(byte[][] args) {
-        RedisKeyword redisKeyword = RedisKeyword.convert(args[0]);
-        if (RedisKeyword.LIST == redisKeyword) {
-            LOGGER.warn("start handling \"CLIENT LIST\" command from {}",
-                    RedisServerContext.getCommand().getClientAddress());
-            return new AsyncReply<>(() -> BulkReply.bulkReply(ClientStat.list()));
-        } else {
-            return ErrorReply.NYI_REPLY;
+        ClientStat stat = ClientStat.getStat(RedisServerContext.getChannel());
+        switch (RedisKeyword.convert(args[0])) {
+            case LIST:
+                // TODO Handle more "CLIENT LIST" options.
+                LOGGER.warn("start handling \"CLIENT LIST\" command from {}",
+                        RedisServerContext.getCommand().getClientAddress());
+                return new AsyncReply<>(() -> BulkReply.bulkReply(ClientStat.list()));
+            case GETNAME:
+                return BulkReply.bulkReply(stat.getName());
+            case SETNAME:
+                String clientName = string(args[1]);
+                stat.setName(clientName);
+                return SimpleStringReply.OK;
+            case ID:
+                return IntegerReply.integer(stat.id);
+            case INFO:
+                return BulkReply.bulkReply(stat.dump());
+            case KILL:
+                // TODO Implement "CLIENT KILL" command.
+            case PAUSE:
+            case UNPAUSE:
+                // TODO Implement "CLIENT PAUSE and UNPAUSE" command.
+            case REPLY:
+                // TODO Implement "CLIENT REPLY" command.
+            case UNBLOCK:
+                // TODO Implement "CLIENT UNBLOCK" command.
+            case CACHING:
+            case GETREDIR:
+            case TRACKING:
+            case TRACKINGINFO:
+                // TODO How to implement Redis client side caching related commands?
+                //  ref: https://redis.io/topics/client-side-caching
+            default:
+                return ErrorReply.NYI_REPLY;
         }
     }
 

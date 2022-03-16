@@ -8,7 +8,7 @@ import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
 
 @SuppressWarnings("unused")
-public interface RedisStringsServer {
+public interface RedisStringServer {
 
     @RWType(type = WRITE)
     Reply append(byte[] key, byte[] value) throws RedisException;

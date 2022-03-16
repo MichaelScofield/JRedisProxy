@@ -8,7 +8,7 @@ import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
 
 @SuppressWarnings("unused")
-public interface RedisBitmapsServer {
+public interface RedisBitmapServer {
 
     @RWType(type = READ)
     Reply bitcount(byte[] key, byte[] start, byte[] end) throws RedisException;

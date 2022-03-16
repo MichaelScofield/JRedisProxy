@@ -10,11 +10,15 @@ import static org.jrp.cmd.RWType.Type.WRITE;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringsServer, RedisBitmapsServer {
+public interface RedisServer extends RedisStringServer, RedisBitmapServer {
 
     ProxyConfig getProxyConfig();
 
+    // TODO How to implement "AUTH" command?
+    //  Read the Redis ACL guide first: https://redis.io/topics/acl
     SimpleStringReply auth(byte[] password) throws RedisException;
+
+    Reply client(byte[][] args) throws RedisException;
 
     @RWType(type = READ)
     BulkReply echo(byte[] message0) throws RedisException;
@@ -25,8 +29,6 @@ public interface RedisServer extends RedisStringsServer, RedisBitmapsServer {
     SimpleStringReply quit() throws RedisException;
 
     SimpleStringReply select(byte[] index) throws RedisException;
-
-    Reply client(byte[][] args) throws RedisException;
 
     Reply config(byte[][] args) throws RedisException;
 

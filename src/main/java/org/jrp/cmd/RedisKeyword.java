@@ -12,6 +12,7 @@ public enum RedisKeyword {
     ASC,
     BEFORE,
     BY,
+    CACHING,
     COUNT,
     DESC,
     EX,
@@ -19,27 +20,41 @@ public enum RedisKeyword {
     EXISTS,
     FAIL,
     GET,
+    GETNAME,
+    GETREDIR,
+    ID,
     INCRBY,
+    INFO,
     KEEPTTL,
+    KILL,
     LIMIT,
     LIST,
     LOAD,
     MATCH,
     MAX,
     MIN,
+    NO,
     NX,
     OVERFLOW,
+    PAUSE,
     PERSIST,
     PX,
     PXAT,
+    REPLY,
     SAT,
     SET,
+    SETNAME,
     STORE,
     SUM,
+    TRACKING,
+    TRACKINGINFO,
+    UNBLOCK,
+    UNPAUSE,
     WEIGHTS,
     WITHSCORES,
     WRAP,
-    XX;
+    XX,
+    YES;
 
     private final byte[] name;
 
@@ -50,6 +65,7 @@ public enum RedisKeyword {
     /**
      * 把byte数组转换成RedisKeyword. byte数组会变成全大写, 使用后要小心.
      */
+    // TODO: Optimized to binary search.
     public static RedisKeyword convert(byte[] name) {
         if (name == null) {
             return null;
