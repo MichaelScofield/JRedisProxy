@@ -40,7 +40,7 @@ public class RedisCommandHandlerTest {
     public void testRenamedCommands() throws IllegalCommandException {
         TestRedisServer redisServer = new TestRedisServer();
         ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.setRenameCommands(ImmutableMap.of("getset", "hello", "strlen", ""));
+        proxyConfig.setRenameCommands(ImmutableMap.of("getset", "what", "strlen", ""));
         RedisCommandHandler handler = new RedisCommandHandler(redisServer, proxyConfig);
 
         EmbeddedChannel channel = new EmbeddedChannel(handler);
@@ -49,8 +49,8 @@ public class RedisCommandHandlerTest {
         String key = RandomStringUtils.randomAlphabetic(10);
         String value = RandomStringUtils.randomAlphabetic(10);
 
-        Command helloCommand = new Command(new byte[][]{bytes("hello"), bytes(key), bytes(value)});
-        channel.writeInbound(helloCommand);
+        Command whatCommand = new Command(new byte[][]{bytes("what"), bytes(key), bytes(value)});
+        channel.writeInbound(whatCommand);
         channel.flush();
         Reply reply1 = channel.readOutbound();
         assertEquals("null", reply1.toString());
@@ -287,6 +287,37 @@ public class RedisCommandHandlerTest {
         assertEquals(slowExecBefore + 1, slowExecAfter);
         assertTrue(CommandTimeMonitor.getCurrent().getStat().contains("GET"));
         assertTrue(StringUtils.isNotBlank(CmdLifecycleMetrics.getCurrent().getStat()));
+    }
+
+    @Test
+    public void testHandleSelectCommand() throws IllegalCommandException {
+        RedisCommandHandler handler = new RedisCommandHandler(new TestRedisServer(), new ProxyConfig());
+        EmbeddedChannel channel = new EmbeddedChannel(DefaultChannelId.newInstance(), handler);
+        ClientStat.active(channel);
+
+        Command command = new Command(new byte[][]{bytes("SELECT"), bytes("42")});
+        channel.writeInbound(command);
+        channel.flush();
+
+        Reply reply = channel.readOutbound();
+        assertEquals("OK", reply.toString());
+        ClientStat stat = ClientStat.getStat(channel);
+        assertEquals(42, stat.getDb());
+    }
+
+    @Test
+    public void testHandleQuitCommand() throws IllegalCommandException {
+        RedisCommandHandler handler = new RedisCommandHandler(new TestRedisServer(), new ProxyConfig());
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+        ClientStat.active(channel);
+
+        Command command = new Command(new byte[][]{bytes("QUIT")});
+        channel.writeInbound(command);
+        channel.flush();
+
+        Reply reply = channel.readOutbound();
+        assertEquals("OK", reply.toString());
+        assertFalse(channel.isActive());
     }
 
     public static class TestRedisServer extends AbstractRedisServer {

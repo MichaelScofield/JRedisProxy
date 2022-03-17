@@ -20,13 +20,16 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
 
     Reply client(byte[][] args) throws RedisException;
 
-    @RWType(type = READ)
-    BulkReply echo(byte[] message0) throws RedisException;
+    BulkReply echo(byte[] message) throws RedisException;
 
-    @RWType(type = READ)
-    SimpleStringReply ping(byte[] message) throws RedisException;
+    // TODO Implement "HELLO" command (after "AUTH" command)
+    Reply hello(byte[][] options) throws RedisException;
+
+    Reply ping(byte[] message) throws RedisException;
 
     SimpleStringReply quit() throws RedisException;
+
+    SimpleStringReply reset() throws RedisException;
 
     SimpleStringReply select(byte[] index) throws RedisException;
 

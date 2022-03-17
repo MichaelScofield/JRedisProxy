@@ -126,6 +126,10 @@ public class ClientStat {
         this.proxyTimeout = proxyTimeout;
     }
 
+    public int getDb() {
+        return db;
+    }
+
     public void setDb(int db) {
         this.db = db;
     }

@@ -166,7 +166,12 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public SimpleStringReply select(byte[] index) {
+    public Reply hello(byte[][] options) throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
+    public final SimpleStringReply select(byte[] index) {
         int db = toInt(index);
         ClientStat stat = ClientStat.getStat(RedisServerContext.getChannel());
         stat.setDb(db);
@@ -799,12 +804,14 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public final SimpleStringReply ping(byte[] message) {
-        if (message == null) {
-            return PONG;
-        } else {
-            return new SimpleStringReply(message);
-        }
+    public final Reply ping(byte[] message) {
+        return message == null ? PONG : BulkReply.bulkReply(message);
+    }
+
+    @Override
+    public final SimpleStringReply reset() {
+        // TODO Implement real reset: https://redis.io/commands/reset
+        return RESET;
     }
 
     @Override
