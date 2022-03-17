@@ -52,6 +52,16 @@ public class RedisproxyAsyncServerTest {
     }
 
     @Test
+    public void testBgrewriteaof() {
+        assertEquals("Background append only file rewriting started", proxy.bgrewriteaof());
+    }
+
+    @Test
+    public void testBgsave() {
+        assertEquals("Background saving started", proxy.bgsave());
+    }
+
+    @Test
     public void testConfigGet() {
         assertArrayEquals(new String[]{"proxy.port", "6380"}, proxy.configGet("proxy.port").toArray());
         assertArrayEquals(new String[]{"maxmemory", "0"}, proxy.configGet("maxmemory").toArray());

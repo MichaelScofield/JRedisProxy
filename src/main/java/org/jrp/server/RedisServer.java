@@ -33,6 +33,10 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
 
     SimpleStringReply select(byte[] index) throws RedisException;
 
+    Reply bgrewriteaof() throws RedisException;
+
+    Reply bgsave() throws RedisException;
+
     Reply config(byte[][] args) throws RedisException;
 
     IntegerReply dbsize() throws RedisException;
@@ -310,7 +314,7 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
 
     Reply subscribe(byte[][] channels) throws RedisException;
 
-    Reply command(byte[] subcommand0, byte[][] keys) throws RedisException;
+    Reply command(byte[] subcommand, byte[][] options) throws RedisException;
 
     Reply unsubscribe(byte[][] channel) throws RedisException;
 

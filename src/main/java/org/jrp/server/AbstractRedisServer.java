@@ -179,6 +179,16 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
+    public Reply bgrewriteaof() throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
+    public Reply bgsave() throws RedisException {
+        throw NOT_IMPLEMENTED_ERROR;
+    }
+
+    @Override
     public final Reply client(byte[][] args) {
         ClientStat stat = ClientStat.getStat(RedisServerContext.getChannel());
         switch (RedisKeyword.convert(args[0])) {
@@ -783,7 +793,11 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply command(byte[] bytes, byte[][] bytes1) throws RedisException {
+    public final Reply command(byte[] subcommand, byte[][] options) throws RedisException {
+        if (subcommand == null) {
+            // TODO Implement the "COMMAND" command: https://redis.io/commands/command (after everything has done).
+            throw NOT_IMPLEMENTED_ERROR;
+        }
         throw NOT_IMPLEMENTED_ERROR;
     }
 

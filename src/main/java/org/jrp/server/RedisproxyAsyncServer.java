@@ -40,6 +40,20 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
+    public Reply bgrewriteaof() {
+        LOGGER.warn("\"BGREWRITEAOF\" was called by {}", RedisServerContext.getChannel());
+        RedisFuture<String> future = getRedisClient().bgrewriteaof();
+        return new FutureReply<>(future, SimpleStringReply::from);
+    }
+
+    @Override
+    public Reply bgsave() {
+        LOGGER.warn("\"BGSAVE\" was called by {}", RedisServerContext.getChannel());
+        RedisFuture<String> future = getRedisClient().bgsave();
+        return new FutureReply<>(future, SimpleStringReply::from);
+    }
+
+    @Override
     protected Reply doConfigGet(String parameter) {
         RedisFuture<Map<String, String>> future = getRedisClient().configGet(parameter);
         return new FutureReply<>(future, MultiBulkReply::fromStringMap);
