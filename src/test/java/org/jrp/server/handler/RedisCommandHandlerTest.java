@@ -362,7 +362,7 @@ public class RedisCommandHandlerTest {
         }
 
         @Override
-        public Reply append(byte[] key, byte[] value) throws RedisException {
+        public Reply append(byte[] key, byte[] value) {
             throw new RedisException("expected");
         }
 

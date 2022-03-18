@@ -4,6 +4,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jrp.cmd.CommandProcessors;
 import org.jrp.cmd.RedisKeyword;
 import org.jrp.config.ProxyConfig;
 import org.jrp.exception.RedisException;
@@ -16,7 +17,8 @@ import java.time.Instant;
 import java.util.Arrays;
 
 import static org.jrp.exception.RedisException.NOT_IMPLEMENTED_ERROR;
-import static org.jrp.reply.SimpleStringReply.*;
+import static org.jrp.reply.SimpleStringReply.OK;
+import static org.jrp.reply.SimpleStringReply.RESET;
 import static org.jrp.utils.BytesUtils.string;
 import static org.jrp.utils.BytesUtils.toInt;
 
@@ -36,156 +38,11 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply append(byte[] key, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply bitcount(byte[] key, byte[] start, byte[] end) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply bitfield(byte[] key, byte[][] options) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply bitfield_ro(byte[] key, byte[][] options) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply bitop(byte[] operation, byte[] destkey, byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply bitpos(byte[] key, byte[] bit, byte[] start, byte[] end) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply decr(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply decrby(byte[] key, byte[] decrement) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply get(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply getdel(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply getex(byte[] key, byte[][] options) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply getbit(byte[] key, byte[] offset) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply incrbyfloat(byte[] key, byte[] increment) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply mget(byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply mset(byte[][] keysAndValues) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply msetnx(byte[][] keysAndValues) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply psetex(byte[] key, byte[] milliseconds, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply set(byte[] key, byte[] value1, byte[][] options) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply setbit(byte[] key, byte[] offset, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply setex(byte[] key, byte[] seconds, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply setnx(byte[] key, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply setrange(byte[] key, byte[] offset, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply strlen(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply substr(byte[] key, byte[] start, byte[] end) throws RedisException {
-        return getrange(key, start, end);
-    }
-
-    @Override
-    public SimpleStringReply auth(byte[] password) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public final BulkReply echo(byte[] message) {
-        return BulkReply.bulkReply(message);
-    }
-
-    @Override
-    public Reply hello(byte[][] options) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public final SimpleStringReply select(byte[] index) {
+    public final Reply select(byte[] index) {
         int db = toInt(index);
         ClientStat stat = ClientStat.getStat(RedisServerContext.getChannel());
         stat.setDb(db);
         return OK;
-    }
-
-    @Override
-    public Reply bgrewriteaof() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply bgsave() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
     }
 
     @Override
@@ -223,27 +80,19 @@ public abstract class AbstractRedisServer implements RedisServer {
                 // TODO How to implement Redis client side caching related commands?
                 //  ref: https://redis.io/topics/client-side-caching
             default:
-                return ErrorReply.NYI_REPLY;
+                return ErrorReply.NOT_IMPL;
         }
     }
 
     @Override
-    public Reply config(byte[][] args) throws RedisException {
-        Reply reply;
-        RedisKeyword redisKeyword = RedisKeyword.convert(args[0]);
-        if (redisKeyword != null) {
-            reply = switch (redisKeyword) {
-                case GET:
-                    yield configGet(args);
-                case SET:
-                    yield configSet(args);
-                default:
-                    yield ErrorReply.NYI_REPLY;
-            };
-        } else {
-            reply = ErrorReply.SYNTAX_ERROR;
-        }
-        return reply;
+    public final Reply config(byte[][] args) {
+        return switch (RedisKeyword.convert(args[0])) {
+            case GET -> configGet(args);
+            case SET -> configSet(args);
+            case RESETSTAT -> configResetstat();
+            case REWRITE -> configRewrite();
+            default -> ErrorReply.SYNTAX_ERROR;
+        };
     }
 
     private Reply configGet(byte[][] args) throws RedisException {
@@ -262,8 +111,8 @@ public abstract class AbstractRedisServer implements RedisServer {
         }
     }
 
-    protected Reply doConfigGet(String parameter) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
+    protected Reply doConfigGet(String parameter) {
+        return ErrorReply.NOT_IMPL;
     }
 
     // TODO Select some unchangeable proxy configs such as "port" or "name"
@@ -290,33 +139,32 @@ public abstract class AbstractRedisServer implements RedisServer {
         }
     }
 
-    protected Reply doConfigSet(String parameter, String value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
+    protected Reply doConfigSet(String parameter, String value) {
+        return ErrorReply.NOT_IMPL;
+    }
+
+    protected Reply configResetstat() {
+        return ErrorReply.NOT_IMPL;
+    }
+
+    protected Reply configRewrite() {
+        return ErrorReply.NOT_IMPL;
     }
 
     @Override
-    public Reply info(byte[] section) throws RedisException {
+    public Reply info(byte[] section) {
         String sb = "# Proxy Config\n" + getProxyConfig() + "\n" + doInfo(section) + "\n";
         return BulkReply.bulkReply(sb);
     }
 
-    protected String doInfo(byte[] section) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
+    protected String doInfo(byte[] section) {
+        return null;
     }
 
     @Override
-    public IntegerReply dbsize() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public SimpleStringReply flushall() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public SimpleStringReply flushdb() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
+    public Reply failover(byte[][] options) {
+        // TODO Implement "FAILOVER" command: https://redis.io/commands/failover
+        return ErrorReply.NOT_IMPL;
     }
 
     @Override
@@ -768,37 +616,22 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply getrange(byte[] key, byte[] start, byte[] end) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply getset(byte[] key, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply incr(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply incrby(byte[] key, byte[] increment) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
     public Reply subscribe(byte[][] bytes) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 
     @Override
-    public final Reply command(byte[] subcommand, byte[][] options) throws RedisException {
+    public final Reply command(byte[] subcommand, byte[][] options) {
         if (subcommand == null) {
             // TODO Implement the "COMMAND" command: https://redis.io/commands/command (after everything has done).
-            throw NOT_IMPLEMENTED_ERROR;
+            return ErrorReply.NOT_IMPL;
         }
-        throw NOT_IMPLEMENTED_ERROR;
+        return switch (RedisKeyword.convert(subcommand)) {
+            case COUNT -> IntegerReply.integer(CommandProcessors.count());
+            // TODO Implement all these "COMMAND" subcommands.
+            case DOCS, GETKEYS, GETKEYSANDFLAGS, INFO, LIST -> throw NOT_IMPLEMENTED_ERROR;
+            default -> ErrorReply.SYNTAX_ERROR;
+        };
     }
 
     @Override
@@ -813,17 +646,7 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public final SimpleStringReply quit() {
-        return QUIT;
-    }
-
-    @Override
-    public final Reply ping(byte[] message) {
-        return message == null ? PONG : BulkReply.bulkReply(message);
-    }
-
-    @Override
-    public final SimpleStringReply reset() {
+    public final Reply reset() {
         // TODO Implement real reset: https://redis.io/commands/reset
         return RESET;
     }

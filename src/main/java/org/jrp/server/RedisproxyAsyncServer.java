@@ -66,7 +66,51 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    protected String doInfo(byte[] section) throws RedisException {
+    protected Reply configResetstat() {
+        RedisFuture<String> future = getRedisClient().configResetstat();
+        return new FutureReply<>(future, SimpleStringReply::from);
+    }
+
+    @Override
+    protected Reply configRewrite() {
+        RedisFuture<String> future = getRedisClient().configRewrite();
+        return new FutureReply<>(future, SimpleStringReply::from);
+    }
+
+    @Override
+    public Reply dbsize() {
+        RedisFuture<Long> future = getRedisClient().dbsize();
+        return new FutureReply<>(future, IntegerReply::integer);
+    }
+
+    @Override
+    public Reply flushall(byte[] option) {
+        RedisKeyword keyword = convert(option);
+        RedisFuture<String> future = keyword == null ?
+                getRedisClient().flushall() :
+                getRedisClient().flushall(switch (keyword) {
+                    case ASYNC -> FlushMode.ASYNC;
+                    case SYNC -> FlushMode.SYNC;
+                    default -> throw RedisException.SYNTAX_ERROR;
+                });
+        return new FutureReply<>(future, SimpleStringReply::from);
+    }
+
+    @Override
+    public Reply flushdb(byte[] option) {
+        RedisKeyword keyword = convert(option);
+        RedisFuture<String> future = keyword == null ?
+                getRedisClient().flushdb() :
+                getRedisClient().flushdb(switch (keyword) {
+                    case ASYNC -> FlushMode.ASYNC;
+                    case SYNC -> FlushMode.SYNC;
+                    default -> throw RedisException.SYNTAX_ERROR;
+                });
+        return new FutureReply<>(future, SimpleStringReply::from);
+    }
+
+    @Override
+    protected String doInfo(byte[] section) {
         RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
         RedisFuture<String> future = section == null ? client.info() : client.info(string(section));
         try {

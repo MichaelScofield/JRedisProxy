@@ -120,6 +120,10 @@ public class CommandProcessors {
         return processor;
     }
 
+    public static int count() {
+        return COMMAND_PROCESSORS.length;
+    }
+
     @VisibleForTesting
     static CommandProcessor[][] getCommandProcessors() {
         return COMMAND_PROCESSORS;

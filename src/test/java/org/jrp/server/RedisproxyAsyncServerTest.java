@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.args.BitOP;
+import redis.clients.jedis.args.FlushMode;
 import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.BitPosParams;
@@ -68,11 +69,35 @@ public class RedisproxyAsyncServerTest {
     }
 
     @Test
+    public void testConfigResetstat() {
+        assertEquals("OK", proxy.configResetStat());
+    }
+
+    @Test
+    public void testConfigRewrite() {
+        assertEquals("OK", proxy.configRewrite());
+    }
+
+    @Test
     public void testConfigSet() {
         assertEquals("OK", proxy.configSet("proxy.timeout",
                 String.valueOf(RandomUtils.nextInt(2000, 3000))));
         assertEquals("OK", proxy.configSet("proxy.maxQueuedCommands", "1024"));
         assertEquals("OK", proxy.configSet("timeout", "2000"));
+    }
+
+    @Test
+    public void testFlushall() {
+        assertEquals("OK", proxy.flushAll());
+        assertEquals("OK", proxy.flushAll(FlushMode.ASYNC));
+        assertEquals("OK", proxy.flushAll(FlushMode.SYNC));
+    }
+
+    @Test
+    public void testFlushdb() {
+        assertEquals("OK", proxy.flushDB());
+        assertEquals("OK", proxy.flushDB(FlushMode.ASYNC));
+        assertEquals("OK", proxy.flushDB(FlushMode.SYNC));
     }
 
     @Test

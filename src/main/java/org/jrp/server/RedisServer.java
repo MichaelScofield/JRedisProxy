@@ -7,6 +7,8 @@ import org.jrp.reply.*;
 
 import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
+import static org.jrp.reply.SimpleStringReply.PONG;
+import static org.jrp.reply.SimpleStringReply.QUIT;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
@@ -16,38 +18,74 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
 
     // TODO How to implement "AUTH" command?
     //  Read the Redis ACL guide first: https://redis.io/topics/acl
-    SimpleStringReply auth(byte[] password) throws RedisException;
+    default Reply auth(byte[] password) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    Reply client(byte[][] args) throws RedisException;
+    default Reply client(byte[][] args) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    BulkReply echo(byte[] message) throws RedisException;
+    default BulkReply echo(byte[] message) {
+        return BulkReply.bulkReply(message);
+    }
 
     // TODO Implement "HELLO" command (after "AUTH" command)
-    Reply hello(byte[][] options) throws RedisException;
+    default Reply hello(byte[][] options) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    Reply ping(byte[] message) throws RedisException;
+    default Reply ping(byte[] message) {
+        return message == null ? PONG : BulkReply.bulkReply(message);
+    }
 
-    SimpleStringReply quit() throws RedisException;
+    default SimpleStringReply quit() {
+        return QUIT;
+    }
 
-    SimpleStringReply reset() throws RedisException;
+    default Reply reset() {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    SimpleStringReply select(byte[] index) throws RedisException;
+    default Reply select(byte[] index) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    Reply bgrewriteaof() throws RedisException;
+    default Reply bgrewriteaof() {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    Reply bgsave() throws RedisException;
+    default Reply bgsave() {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    Reply config(byte[][] args) throws RedisException;
+    default Reply command(byte[] subcommand, byte[][] options) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    IntegerReply dbsize() throws RedisException;
+    default Reply config(byte[][] args) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    @RWType(type = WRITE)
-    SimpleStringReply flushall() throws RedisException;
+    default Reply dbsize() {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    @RWType(type = WRITE)
-    SimpleStringReply flushdb() throws RedisException;
+    default Reply failover(byte[][] options) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    Reply info(byte[] section) throws RedisException;
+    default Reply flushall(byte[] option) {
+        return ErrorReply.NOT_IMPL;
+    }
+
+    default Reply flushdb(byte[] option) {
+        return ErrorReply.NOT_IMPL;
+    }
+
+    default Reply info(byte[] section) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     Reply monitor() throws RedisException;
 
@@ -313,8 +351,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
     Reply scan(byte[] cursor, byte[][] attributes) throws RedisException;
 
     Reply subscribe(byte[][] channels) throws RedisException;
-
-    Reply command(byte[] subcommand, byte[][] options) throws RedisException;
 
     Reply unsubscribe(byte[][] channel) throws RedisException;
 

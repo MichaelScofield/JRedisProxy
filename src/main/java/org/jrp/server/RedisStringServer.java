@@ -1,7 +1,7 @@
 package org.jrp.server;
 
 import org.jrp.cmd.RWType;
-import org.jrp.exception.RedisException;
+import org.jrp.reply.ErrorReply;
 import org.jrp.reply.Reply;
 
 import static org.jrp.cmd.RWType.Type.READ;
@@ -11,65 +11,107 @@ import static org.jrp.cmd.RWType.Type.WRITE;
 public interface RedisStringServer {
 
     @RWType(type = WRITE)
-    Reply append(byte[] key, byte[] value) throws RedisException;
+    default Reply append(byte[] key, byte[] value) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply decr(byte[] key) throws RedisException;
+    default Reply decr(byte[] key) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply decrby(byte[] key, byte[] decrement) throws RedisException;
+    default Reply decrby(byte[] key, byte[] decrement) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = READ)
-    Reply get(byte[] key) throws RedisException;
+    default Reply get(byte[] key) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply getdel(byte[] key) throws RedisException;
+    default Reply getdel(byte[] key) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply getex(byte[] key, byte[][] options) throws RedisException;
+    default Reply getex(byte[] key, byte[][] options) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = READ)
-    Reply getrange(byte[] key, byte[] start, byte[] end) throws RedisException;
+    default Reply getrange(byte[] key, byte[] start, byte[] end) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply getset(byte[] key, byte[] value) throws RedisException;
+    default Reply getset(byte[] key, byte[] value) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply incr(byte[] key) throws RedisException;
+    default Reply incr(byte[] key) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply incrby(byte[] key, byte[] increment) throws RedisException;
+    default Reply incrby(byte[] key, byte[] increment) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply incrbyfloat(byte[] key, byte[] increment) throws RedisException;
+    default Reply incrbyfloat(byte[] key, byte[] increment) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = READ)
-    Reply mget(byte[][] keys) throws RedisException;
+    default Reply mget(byte[][] keys) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply mset(byte[][] keysAndValues) throws RedisException;
+    default Reply mset(byte[][] keysAndValues) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply msetnx(byte[][] keysAndValues) throws RedisException;
+    default Reply msetnx(byte[][] keysAndValues) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply psetex(byte[] key, byte[] milliseconds, byte[] value) throws RedisException;
+    default Reply psetex(byte[] key, byte[] milliseconds, byte[] value) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply set(byte[] key, byte[] value, byte[][] options) throws RedisException;
+    default Reply set(byte[] key, byte[] value, byte[][] options) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply setex(byte[] key, byte[] seconds, byte[] value) throws RedisException;
+    default Reply setex(byte[] key, byte[] seconds, byte[] value) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply setnx(byte[] key, byte[] value) throws RedisException;
+    default Reply setnx(byte[] key, byte[] value) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = WRITE)
-    Reply setrange(byte[] key, byte[] offset, byte[] value) throws RedisException;
+    default Reply setrange(byte[] key, byte[] offset, byte[] value) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = READ)
-    Reply strlen(byte[] key) throws RedisException;
+    default Reply strlen(byte[] key) {
+        return ErrorReply.NOT_IMPL;
+    }
 
     @RWType(type = READ)
-    Reply substr(byte[] key, byte[] start, byte[] end) throws RedisException;
+    default Reply substr(byte[] key, byte[] start, byte[] end) {
+        return getrange(key, start, end);
+    }
 }
