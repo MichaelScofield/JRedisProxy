@@ -4,7 +4,10 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.ScoredValue;
 import io.netty.buffer.ByteBuf;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.jrp.utils.BytesUtils.bytes;
@@ -15,7 +18,7 @@ public record MultiBulkReply(Reply[] replies) implements Reply {
 
     public static MultiBulkReply fromBytesMap(Map<byte[], byte[]> map) {
         if (map == null || map.size() < 1) {
-            return multiBulkReply(Collections.emptyList());
+            return new MultiBulkReply(new Reply[0]);
         }
         BulkReply[] replies = new BulkReply[map.size() * 2];
         int i = 0;
@@ -28,7 +31,7 @@ public record MultiBulkReply(Reply[] replies) implements Reply {
 
     public static MultiBulkReply fromStringMap(Map<String, String> map) {
         if (map == null || map.size() < 1) {
-            return multiBulkReply(Collections.emptyList());
+            return new MultiBulkReply(new Reply[0]);
         }
         BulkReply[] replies = new BulkReply[map.size() * 2];
         int i = 0;
@@ -41,7 +44,7 @@ public record MultiBulkReply(Reply[] replies) implements Reply {
 
     public static MultiBulkReply fromScoreValues(List<ScoredValue<byte[]>> scoredValues) {
         if (scoredValues == null || scoredValues.size() < 1) {
-            return multiBulkReply(Collections.emptyList());
+            return new MultiBulkReply(new Reply[0]);
         }
         BulkReply[] replies = new BulkReply[scoredValues.size() * 2];
         int i = 0;
@@ -54,7 +57,7 @@ public record MultiBulkReply(Reply[] replies) implements Reply {
 
     public static MultiBulkReply fromKeyValues(List<KeyValue<byte[], byte[]>> keyValues) {
         if (keyValues == null || keyValues.size() < 1) {
-            return multiBulkReply(Collections.emptyList());
+            return new MultiBulkReply(new Reply[0]);
         }
         BulkReply[] replies = keyValues.stream()
                 .map(keyValue -> BulkReply.bulkReply(keyValue.hasValue() ? keyValue.getValue() : null))
@@ -62,27 +65,28 @@ public record MultiBulkReply(Reply[] replies) implements Reply {
         return new MultiBulkReply(replies);
     }
 
-    public static MultiBulkReply fromIntegers(List<Long> integers) {
-        if (integers == null || integers.isEmpty()) {
-            return multiBulkReply(Collections.emptyList());
+    public static MultiBulkReply from(Collection<?> objects) {
+        if (objects == null || objects.isEmpty()) {
+            return new MultiBulkReply(new Reply[0]);
         }
-        IntegerReply[] replies = integers.stream()
-                .map(IntegerReply::integer)
-                .toArray(IntegerReply[]::new);
-        return new MultiBulkReply(replies);
-    }
-
-    public static MultiBulkReply multiBulkReply(Collection<String> strings) {
-        BulkReply[] replies = strings.stream()
-                .map(BulkReply::bulkReply)
-                .toArray(BulkReply[]::new);
-        return new MultiBulkReply(replies);
-    }
-
-    public static MultiBulkReply rawMultiBulkReply(Collection<byte[]> bytes) {
-        BulkReply[] replies = bytes.stream()
-                .map(BulkReply::bulkReply)
-                .toArray(BulkReply[]::new);
+        Reply[] replies = new Reply[objects.size()];
+        int i = 0;
+        for (Object o : objects) {
+            if (o instanceof Long l) {
+                replies[i] = IntegerReply.integer(l);
+            } else if (o instanceof byte[] bytes) {
+                replies[i] = BulkReply.bulkReply(bytes);
+            } else if (o instanceof String s) {
+                replies[i] = BulkReply.bulkReply(s);
+            } else if (o instanceof List<?> subList) {
+                replies[i] = MultiBulkReply.from(subList);
+            } else {
+                throw new IllegalArgumentException(String.format(
+                        "unable to parse object \"%s\" with type \"%s\" to reply",
+                        o, o.getClass()));
+            }
+            i += 1;
+        }
         return new MultiBulkReply(replies);
     }
 

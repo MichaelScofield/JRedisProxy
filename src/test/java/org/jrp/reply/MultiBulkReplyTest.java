@@ -16,10 +16,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class MultiBulkReplyTest {
 
     @Test
-    public void testCreateMultiBulkReplyFromIntegers() {
-        MultiBulkReply reply1 = MultiBulkReply.fromIntegers(new ArrayList<>());
+    public void testCreateMultiBulkReplyFromObjects() {
+        MultiBulkReply reply1 = MultiBulkReply.from(new ArrayList<>());
         assertEquals("", reply1.toString());
-        MultiBulkReply reply2 = MultiBulkReply.fromIntegers(Arrays.asList(1L, 2L, 3L));
+
+        List<Object> objects = new ArrayList<>();
+        objects.add(12L);
+        objects.add(1647783423L);
+        objects.add(14L);
+        objects.add(Arrays.asList(
+                bytes("CONFIG"),
+                bytes("SET"),
+                bytes("slowlog-log-slower-than"),
+                bytes("0")));
+        objects.add(bytes("127.0.0.1:49370"));
+        objects.add(bytes(""));
+        MultiBulkReply reply2 = MultiBulkReply.from(objects);
+
+        ByteBuf buffer = Unpooled.buffer();
+        reply2.write(buffer);
+        //noinspection TextBlockMigration
+        assertEquals("*6\r\n:12\r\n:1647783423\r\n:14\r\n" +
+                "*4\r\n$6\r\nCONFIG\r\n$3\r\nSET\r\n$23\r\nslowlog-log-slower-than\r\n$1\r\n0\r\n" +
+                "$15\r\n127.0.0.1:49370\r\n$0\r\n\r\n", string(ByteBufUtil.getBytes(buffer)));
+    }
+
+    @Test
+    public void testCreateMultiBulkReplyFromIntegers() {
+        MultiBulkReply reply2 = MultiBulkReply.from(Arrays.asList(1L, 2L, 3L));
         ByteBuf buffer = Unpooled.buffer();
         reply2.write(buffer);
         assertEquals("*3\r\n:1\r\n:2\r\n:3\r\n", string(ByteBufUtil.getBytes(buffer)));
@@ -104,9 +128,9 @@ public class MultiBulkReplyTest {
     }
 
     @Test
-    public void testCreateMultiBulkReplyFromCollection() {
+    public void testCreateMultiBulkReplyFromStrings() {
         List<String> strings = new ArrayList<>();
-        MultiBulkReply reply1 = MultiBulkReply.multiBulkReply(strings);
+        MultiBulkReply reply1 = MultiBulkReply.from(strings);
         assertEquals("", reply1.toString());
         ByteBuf buffer1 = Unpooled.buffer();
         reply1.write(buffer1);
@@ -114,7 +138,7 @@ public class MultiBulkReplyTest {
 
         strings.add("v1");
         strings.add("v2");
-        MultiBulkReply reply2 = MultiBulkReply.multiBulkReply(strings);
+        MultiBulkReply reply2 = MultiBulkReply.from(strings);
         assertEquals("\"v1\" \"v2\"", reply2.toString());
         ByteBuf buffer2 = Unpooled.buffer();
         reply2.write(buffer2);
@@ -122,9 +146,9 @@ public class MultiBulkReplyTest {
     }
 
     @Test
-    public void testCreateRawMultiBulkReply() {
+    public void testCreateMultiBulkReplyFromBytes() {
         List<byte[]> strings = new ArrayList<>();
-        MultiBulkReply reply1 = MultiBulkReply.rawMultiBulkReply(strings);
+        MultiBulkReply reply1 = MultiBulkReply.from(strings);
         assertEquals("", reply1.toString());
         ByteBuf buffer1 = Unpooled.buffer();
         reply1.write(buffer1);
@@ -132,7 +156,7 @@ public class MultiBulkReplyTest {
 
         strings.add(bytes("v1"));
         strings.add(bytes("v2"));
-        MultiBulkReply reply2 = MultiBulkReply.rawMultiBulkReply(strings);
+        MultiBulkReply reply2 = MultiBulkReply.from(strings);
         assertEquals("\"v1\" \"v2\"", reply2.toString());
         ByteBuf buffer2 = Unpooled.buffer();
         reply2.write(buffer2);
@@ -156,7 +180,7 @@ public class MultiBulkReplyTest {
         for (int i = 0; i < 10; i++) {
             l1.add("v" + i);
         }
-        MultiBulkReply reply2 = MultiBulkReply.multiBulkReply(l1);
+        MultiBulkReply reply2 = MultiBulkReply.from(l1);
         assertEquals(
                 "\"v0\" \"v1\" \"v2\" \"v3\" \"v4\" \"v5\" \"v6\" \"v7\" \"v8\" \"v9\"",
                 reply2.toString());
@@ -165,7 +189,7 @@ public class MultiBulkReplyTest {
         for (int i = 0; i < 100; i++) {
             l2.add("v" + i);
         }
-        MultiBulkReply reply3 = MultiBulkReply.multiBulkReply(l2);
+        MultiBulkReply reply3 = MultiBulkReply.from(l2);
         assertEquals(
                 "\"v0\" \"v1\" \"v2\" \"v3\" \"v4\" \"v5\" \"v6\" \"v7\" \"v8\" \"v9\" ...(and 90 more)",
                 reply3.toString());

@@ -42,7 +42,7 @@ public class RedisReplyEncoderTest {
         String s2 = RandomStringUtils.randomAlphabetic(10);
 
         EmbeddedChannel channel = new EmbeddedChannel(new RedisReplyEncoder());
-        channel.writeOutbound(MultiBulkReply.multiBulkReply(Arrays.asList(s1, s2)));
+        channel.writeOutbound(MultiBulkReply.from(Arrays.asList(s1, s2)));
         channel.finish();
         ByteBuf reply = channel.readOutbound();
         assertEquals(

@@ -9,11 +9,9 @@ import org.jrp.cmd.RedisKeyword;
 import org.jrp.config.ProxyConfig;
 import org.jrp.exception.RedisException;
 import org.jrp.monitor.ClientStat;
-import org.jrp.monitor.Monitor;
 import org.jrp.reply.*;
 
 import java.lang.reflect.InvocationTargetException;
-import java.time.Instant;
 import java.util.Arrays;
 
 import static org.jrp.exception.RedisException.NOT_IMPLEMENTED_ERROR;
@@ -105,7 +103,7 @@ public abstract class AbstractRedisServer implements RedisServer {
             } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 throw new RedisException(e);
             }
-            return MultiBulkReply.multiBulkReply(Arrays.asList(parameter, value));
+            return MultiBulkReply.from(Arrays.asList(parameter, value));
         } else {
             return doConfigGet(parameter);
         }
@@ -165,19 +163,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     public Reply failover(byte[][] options) {
         // TODO Implement "FAILOVER" command: https://redis.io/commands/failover
         return ErrorReply.NOT_IMPL;
-    }
-
-    @Override
-    public Reply slowlog(byte[] subcommand, byte[] argument) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public MultiBulkReply time() throws RedisException {
-        Instant now = Instant.now();
-        long epochSecond = now.getEpochSecond();
-        long micros = now.getNano() / 1000 % 1_000_000;
-        return MultiBulkReply.multiBulkReply(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
 
     @Override
@@ -637,12 +622,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     @Override
     public Reply unsubscribe(byte[][] bytes) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public final Reply monitor() throws RedisException {
-        Monitor.startMonitor(RedisServerContext.getChannel());
-        return OK;
     }
 
     @Override

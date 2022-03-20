@@ -3,14 +3,18 @@ package org.jrp.server;
 import org.jrp.cmd.RWType;
 import org.jrp.config.ProxyConfig;
 import org.jrp.exception.RedisException;
+import org.jrp.monitor.Monitor;
 import org.jrp.reply.*;
+
+import java.time.Instant;
+import java.util.Arrays;
 
 import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
-import static org.jrp.reply.SimpleStringReply.PONG;
-import static org.jrp.reply.SimpleStringReply.QUIT;
+import static org.jrp.reply.SimpleStringReply.*;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
+// TODO Implement all "server" group commands.
 @SuppressWarnings("unused")
 public interface RedisServer extends RedisStringServer, RedisBitmapServer {
 
@@ -87,12 +91,21 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
         return ErrorReply.NOT_IMPL;
     }
 
-    Reply monitor() throws RedisException;
+    default Reply monitor() {
+        Monitor.startMonitor(RedisServerContext.getChannel());
+        return OK;
+    }
 
-    Reply slowlog(byte[] subcommand, byte[] argument) throws RedisException;
+    default Reply slowlog(byte[] subcommand, byte[] argument) {
+        return ErrorReply.NOT_IMPL;
+    }
 
-    @RWType(type = READ)
-    MultiBulkReply time() throws RedisException;
+    default MultiBulkReply time() {
+        Instant now = Instant.now();
+        long epochSecond = now.getEpochSecond();
+        long micros = now.getNano() / 1000 % 1_000_000;
+        return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
+    }
 
     @RWType(type = WRITE)
     MultiBulkReply blpop(byte[][] key) throws RedisException;

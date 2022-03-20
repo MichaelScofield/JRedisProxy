@@ -9,6 +9,7 @@ import org.jrp.exception.IllegalCommandException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisMonitor;
 import redis.clients.jedis.args.BitOP;
 import redis.clients.jedis.args.FlushMode;
 import redis.clients.jedis.args.ListPosition;
@@ -17,13 +18,13 @@ import redis.clients.jedis.params.BitPosParams;
 import redis.clients.jedis.params.GetExParams;
 import redis.clients.jedis.params.SetParams;
 import redis.clients.jedis.params.ZParams;
+import redis.clients.jedis.resps.Slowlog;
 import redis.clients.jedis.resps.Tuple;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.jrp.utils.BytesUtils.bytes;
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,7 +32,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RedisproxyAsyncServerTest {
 
     private final Jedis redis = new Jedis("127.0.0.1", 6379);
-    private final Jedis proxy = new Jedis("127.0.0.1", 6380);
+    private final Jedis proxy = createProxyClient();
+
+    private Jedis createProxyClient() {
+        return new Jedis("127.0.0.1", 6380);
+    }
 
     @BeforeAll
     public static void startRedisproxy() throws IllegalCommandException, IOException, InterruptedException {
@@ -104,6 +109,49 @@ public class RedisproxyAsyncServerTest {
     public void testInfo() {
         assertNotNull(proxy.info());
         assertNotNull(proxy.info("Server"));
+    }
+
+    @Test
+    public void testMonitor() throws InterruptedException {
+        CountDownLatch monitored = new CountDownLatch(3);
+        List<String> commands = new ArrayList<>();
+        new Thread(() -> createProxyClient().monitor(new JedisMonitor() {
+            @Override
+            public void onCommand(String command) {
+                commands.add(command);
+                monitored.countDown();
+            }
+        })).start();
+        TimeUnit.SECONDS.sleep(1);
+
+        String k1 = getRandomString();
+        String k2 = getRandomString();
+        String k3 = getRandomString();
+        proxy.get(k1);
+        proxy.get(k2);
+        proxy.get(k3);
+        assertTrue(monitored.await(1, TimeUnit.SECONDS));
+        assertEquals(3, commands.size());
+        assertTrue(commands.get(0).contains(k1));
+        assertTrue(commands.get(1).contains(k2));
+        assertTrue(commands.get(2).contains(k3));
+    }
+
+    @Test
+    public void testSlowlog() {
+        String slowlogThreshold = redis.configGet("slowlog-log-slower-than").get(1);
+        redis.configSet("slowlog-log-slower-than", "0");
+        try {
+            assertTrue(proxy.slowlogLen() >= 1);
+
+            List<Slowlog> slowlogs = proxy.slowlogGet(1);
+            assertEquals(1, slowlogs.size());
+            assertArrayEquals(new String[]{"SLOWLOG", "LEN"}, slowlogs.get(0).getArgs().toArray());
+
+            assertEquals("OK", proxy.slowlogReset());
+        } finally {
+            redis.configSet("slowlog-log-slower-than", slowlogThreshold);
+        }
     }
 
     String getRandomString() {

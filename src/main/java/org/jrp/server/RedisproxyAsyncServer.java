@@ -121,6 +121,30 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
+    public Reply slowlog(byte[] subcommand, byte[] argument) {
+        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
+        switch (RedisKeyword.convert(subcommand)) {
+            case GET -> {
+                RedisFuture<List<Object>> future = argument == null ?
+                        client.slowlogGet() :
+                        client.slowlogGet(toInt(argument));
+                return new FutureReply<>(future, MultiBulkReply::from);
+            }
+            case LEN -> {
+                RedisFuture<Long> future = client.slowlogLen();
+                return new FutureReply<>(future, IntegerReply::integer);
+            }
+            case RESET -> {
+                RedisFuture<String> future = client.slowlogReset();
+                return new FutureReply<>(future, SimpleStringReply::from);
+            }
+            default -> {
+                return ErrorReply.SYNTAX_ERROR;
+            }
+        }
+    }
+
+    @Override
     public Reply append(byte[] key, byte[] value) {
         RedisFuture<Long> future = getRedisClient().append(key, value);
         return new FutureReply<>(future, IntegerReply::new);
@@ -138,7 +162,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     public Reply bitfield(byte[] key, byte[][] options) throws RedisException {
         BitFieldArgs args = options == null ? new BitFieldArgs() : parseBitFieldArgs(options);
         RedisFuture<List<Long>> future = getRedisClient().bitfield(key, args);
-        return new FutureReply<>(future, MultiBulkReply::fromIntegers);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     private BitFieldArgs parseBitFieldArgs(byte[][] options) throws RedisException {
@@ -393,7 +417,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply lrange(byte[] rawkey, byte[] start, byte[] stop) {
         RedisFuture<List<byte[]>> future = getRedisClient().lrange(rawkey, toLong(start), toLong(stop));
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
@@ -534,14 +558,14 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
         if (pattern == null) {
             RedisFuture<List<byte[]>> future = client.sort(rawkey);
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         } else {
             Pair<byte[], SortArgs> pair = getSortArgs(pattern);
             byte[] destination = pair.getLeft();
             SortArgs sortArgs = pair.getRight();
             if (destination == null) {
                 RedisFuture<List<byte[]>> future = client.sort(rawkey, sortArgs);
-                return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+                return new FutureReply<>(future, MultiBulkReply::from);
             } else {
                 RedisFuture<Long> future = client.sortStore(rawkey, sortArgs, destination);
                 return new FutureReply<>(future, IntegerReply::new);
@@ -608,7 +632,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply sdiff(byte[][] keys) {
         RedisFuture<Set<byte[]>> future = getRedisClient().sdiff(keys);
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
@@ -620,7 +644,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply sinter(byte[][] keys) {
         RedisFuture<Set<byte[]>> future = getRedisClient().sinter(keys);
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
@@ -638,7 +662,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply smembers(byte[] rawkey) {
         RedisFuture<Set<byte[]>> future = getRedisClient().smembers(rawkey);
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
@@ -660,7 +684,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             return new FutureReply<>(future, BulkReply::bulkReply);
         } else {
             RedisFuture<List<byte[]>> future = getRedisClient().srandmember(rawkey, toLong(count));
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
     }
 
@@ -673,7 +697,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply sunion(byte[][] keys) {
         RedisFuture<Set<byte[]>> future = getRedisClient().sunion(keys);
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
@@ -780,7 +804,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
         } else {
             RedisFuture<List<byte[]>> future = client.zrange(rawkey, start, stop);
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
     }
 
@@ -822,7 +846,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         Range<Double> range = Range.create(toDouble(min), toDouble(max));
         if (args == null) {
             RedisFuture<List<byte[]>> future = client.zrangebyscore(rawkey, range);
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
 
         ScoreAttributes scoreAttributes = toScoreAttributes(args);
@@ -843,7 +867,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             } else {
                 future = client.zrangebyscore(rawkey, range);
             }
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
     }
 
@@ -883,7 +907,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
         } else {
             RedisFuture<List<byte[]>> future = client.zrevrange(rawkey, start, stop);
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
     }
 
@@ -895,7 +919,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         Range<Double> range = Range.create(toDouble(min), toDouble(max));
         if (args == null) {
             RedisFuture<List<byte[]>> future = client.zrevrangebyscore(rawkey, range);
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
 
         ScoreAttributes scoreAttributes = toScoreAttributes(args);
@@ -916,7 +940,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             } else {
                 future = client.zrevrangebyscore(rawkey, range);
             }
-            return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+            return new FutureReply<>(future, MultiBulkReply::from);
         }
     }
 
@@ -929,7 +953,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply hkeys(byte[] rawkey) {
         RedisFuture<List<byte[]>> future = getRedisClient().hkeys(rawkey);
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
@@ -973,7 +997,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     @Override
     public Reply hvals(byte[] rawkey) {
         RedisFuture<List<byte[]>> future = getRedisClient().hvals(rawkey);
-        return new FutureReply<>(future, MultiBulkReply::rawMultiBulkReply);
+        return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     // TODO lack of unit tests
