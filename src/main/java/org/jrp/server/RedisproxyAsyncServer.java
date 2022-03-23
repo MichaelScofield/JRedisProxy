@@ -10,14 +10,14 @@ import org.jrp.cmd.RedisKeyword;
 import org.jrp.config.ProxyConfig;
 import org.jrp.exception.RedisException;
 import org.jrp.reply.*;
+import org.jrp.utils.BytesUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static io.lettuce.core.BitFieldArgs.*;
 import static org.jrp.cmd.RedisKeyword.*;
@@ -374,92 +374,166 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply lindex(byte[] rawkey, byte[] index) {
-        RedisFuture<byte[]> future = getRedisClient().lindex(rawkey, toLong(index));
+    public Reply lindex(byte[] key, byte[] index) {
+        RedisFuture<byte[]> future = getRedisClient().lindex(key, toLong(index));
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
     @Override
-    public Reply linsert(byte[] rawkey, byte[] where, byte[] pivot, byte[] value) throws RedisException {
+    public Reply linsert(byte[] key, byte[] where, byte[] pivot, byte[] value) throws RedisException {
         boolean before = switch (RedisKeyword.convert(where)) {
             case BEFORE -> true;
             case AFTER -> false;
             default -> throw RedisException.SYNTAX_ERROR;
         };
-        RedisFuture<Long> future = getRedisClient().linsert(rawkey, before, pivot, value);
+        RedisFuture<Long> future = getRedisClient().linsert(key, before, pivot, value);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply llen(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().llen(rawkey);
+    public Reply llen(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().llen(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply lpop(byte[] rawkey) {
-        RedisFuture<byte[]> future = getRedisClient().lpop(rawkey);
+    public Reply lmove(byte[] source, byte[] destination, byte[] whereFrom, byte[] whereTo) {
+        RedisKeyword from = RedisKeyword.convert(whereFrom);
+        RedisKeyword to = RedisKeyword.convert(whereTo);
+        LMoveArgs args;
+        if (from == LEFT && to == LEFT) {
+            args = LMoveArgs.Builder.leftLeft();
+        } else if (from == LEFT && to == RIGHT) {
+            args = LMoveArgs.Builder.leftRight();
+        } else if (from == RIGHT && to == LEFT) {
+            args = LMoveArgs.Builder.rightLeft();
+        } else if (from == RIGHT && to == RIGHT) {
+            args = LMoveArgs.Builder.rightRight();
+        } else {
+            return ErrorReply.SYNTAX_ERROR;
+        }
+        RedisFuture<byte[]> future = getRedisClient().lmove(source, destination, args);
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
     @Override
-    public Reply lpush(byte[] rawkey, byte[][] values) {
-        RedisFuture<Long> future = getRedisClient().lpush(rawkey, values);
+    public Reply lpop(byte[] key, byte[] count) {
+        if (count == null) {
+            RedisFuture<byte[]> future = getRedisClient().lpop(key);
+            return new FutureReply<>(future, BulkReply::bulkReply);
+        } else {
+            RedisFuture<List<byte[]>> future = getRedisClient().lpop(key, toLong(count));
+            return new FutureReply<>(future, MultiBulkReply::from);
+        }
+    }
+
+    @Override
+    public Reply rpop(byte[] key, byte[] count) {
+        if (count == null) {
+            RedisFuture<byte[]> future = getRedisClient().rpop(key);
+            return new FutureReply<>(future, BulkReply::bulkReply);
+        } else {
+            RedisFuture<List<byte[]>> future = getRedisClient().rpop(key, toLong(count));
+            return new FutureReply<>(future, MultiBulkReply::from);
+        }
+    }
+
+    @Override
+    public Reply lpos(byte[] key, byte[] element, byte[][] args) {
+        Optional<LPosArgs> lPosArgs = Optional.empty();
+        Integer count = null;
+        if (args != null) {
+            try {
+                for (int i = 0; i < args.length; i++) {
+                    switch (RedisKeyword.convert(args[i])) {
+                        case RANK:
+                            lPosArgs = Optional.of(
+                                    lPosArgs.orElseGet(LPosArgs.Builder::empty).rank(toLong(args[++i])));
+                            break;
+                        case COUNT:
+                            count = toInt(args[++i]);
+                            break;
+                        case MAXLEN:
+                            lPosArgs = Optional.of(
+                                    lPosArgs.orElseGet(LPosArgs.Builder::empty).maxlen(toLong(args[++i])));
+                            break;
+                        default:
+                            return ErrorReply.SYNTAX_ERROR;
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("unable to parse LPOS args: " + Arrays.stream(args)
+                        .map(BytesUtils::string)
+                        .collect(Collectors.joining(",")));
+                return ErrorReply.SYNTAX_ERROR;
+            }
+        }
+        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
+        if (count == null) {
+            RedisFuture<Long> future = lPosArgs.isPresent() ?
+                    client.lpos(key, element, lPosArgs.get()) :
+                    client.lpos(key, element);
+            return new FutureReply<>(future, IntegerReply::new);
+        } else {
+            RedisFuture<List<Long>> future = lPosArgs.isPresent() ?
+                    client.lpos(key, element, count, lPosArgs.get()) :
+                    client.lpos(key, element, count);
+            return new FutureReply<>(future, MultiBulkReply::from);
+        }
+    }
+
+    @Override
+    public Reply lpush(byte[] key, byte[][] elements) {
+        RedisFuture<Long> future = getRedisClient().lpush(key, elements);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply lpushx(byte[] rawkey, byte[] value) {
-        RedisFuture<Long> future = getRedisClient().lpushx(rawkey, value);
+    public Reply rpush(byte[] key, byte[][] elements) {
+        RedisFuture<Long> future = getRedisClient().rpush(key, elements);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply lrange(byte[] rawkey, byte[] start, byte[] stop) {
-        RedisFuture<List<byte[]>> future = getRedisClient().lrange(rawkey, toLong(start), toLong(stop));
+    public Reply lpushx(byte[] key, byte[][] elements) {
+        RedisFuture<Long> future = getRedisClient().lpushx(key, elements);
+        return new FutureReply<>(future, IntegerReply::new);
+    }
+
+    @Override
+    public Reply rpushx(byte[] key, byte[][] elements) {
+        RedisFuture<Long> future = getRedisClient().rpushx(key, elements);
+        return new FutureReply<>(future, IntegerReply::new);
+    }
+
+    @Override
+    public Reply lrange(byte[] key, byte[] start, byte[] stop) {
+        RedisFuture<List<byte[]>> future = getRedisClient().lrange(key, toLong(start), toLong(stop));
         return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
-    public Reply lrem(byte[] rawkey, byte[] count, byte[] value) {
-        RedisFuture<Long> future = getRedisClient().lrem(rawkey, toLong(count), value);
+    public Reply lrem(byte[] key, byte[] count, byte[] element) {
+        RedisFuture<Long> future = getRedisClient().lrem(key, toLong(count), element);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply lset(byte[] rawkey, byte[] index, byte[] value) {
-        RedisFuture<String> future = getRedisClient().lset(rawkey, toLong(index), value);
+    public Reply lset(byte[] key, byte[] index, byte[] element) {
+        RedisFuture<String> future = getRedisClient().lset(key, toLong(index), element);
         return new FutureReply<>(future, SimpleStringReply::from);
     }
 
     @Override
-    public Reply ltrim(byte[] rawkey, byte[] start, byte[] stop) {
-        RedisFuture<String> future = getRedisClient().ltrim(rawkey, toLong(start), toLong(stop));
+    public Reply ltrim(byte[] key, byte[] start, byte[] stop) {
+        RedisFuture<String> future = getRedisClient().ltrim(key, toLong(start), toLong(stop));
         return new FutureReply<>(future, SimpleStringReply::from);
-    }
-
-    @Override
-    public Reply rpop(byte[] rawkey) {
-        RedisFuture<byte[]> future = getRedisClient().rpop(rawkey);
-        return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
     @Override
     public Reply rpoplpush(byte[] source, byte[] destination) {
         RedisFuture<byte[]> future = getRedisClient().rpoplpush(source, destination);
         return new FutureReply<>(future, BulkReply::new);
-    }
-
-    @Override
-    public Reply rpush(byte[] rawkey, byte[][] values) {
-        RedisFuture<Long> future = getRedisClient().rpush(rawkey, values);
-        return new FutureReply<>(future, IntegerReply::new);
-    }
-
-    @Override
-    public Reply rpushx(byte[] rawkey, byte[] value) {
-        RedisFuture<Long> future = getRedisClient().rpushx(rawkey, value);
-        return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override

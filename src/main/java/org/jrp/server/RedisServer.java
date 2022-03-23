@@ -16,7 +16,7 @@ import static org.jrp.reply.SimpleStringReply.*;
 // TODO Split into multiple sub servers (category in Redis command groups).
 // TODO Implement all "server" group commands.
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringServer, RedisBitmapServer {
+public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer {
 
     ProxyConfig getProxyConfig();
 
@@ -106,57 +106,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer {
         long micros = now.getNano() / 1000 % 1_000_000;
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
-
-    @RWType(type = WRITE)
-    MultiBulkReply blpop(byte[][] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    MultiBulkReply brpop(byte[][] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    BulkReply brpoplpush(byte[] source, byte[] destination, byte[] timeout) throws RedisException;
-
-    @RWType(type = READ)
-    Reply lindex(byte[] key, byte[] index) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply linsert(byte[] key, byte[] where, byte[] pivot, byte[] value) throws RedisException;
-
-    @RWType(type = READ)
-    Reply llen(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply lpop(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply lpush(byte[] key, byte[][] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply lpushx(byte[] key, byte[] value) throws RedisException;
-
-    @RWType(type = READ)
-    Reply lrange(byte[] key, byte[] start, byte[] stop) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply lrem(byte[] key, byte[] count, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply lset(byte[] key, byte[] index, byte[] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply ltrim(byte[] key, byte[] start, byte[] stop) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply rpop(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply rpoplpush(byte[] source, byte[] destination) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply rpush(byte[] key, byte[][] value) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply rpushx(byte[] key, byte[] value) throws RedisException;
 
     @RWType(type = WRITE)
     Reply del(byte[][] keys) throws RedisException;

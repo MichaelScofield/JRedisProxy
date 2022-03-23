@@ -12,6 +12,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisMonitor;
 import redis.clients.jedis.args.BitOP;
 import redis.clients.jedis.args.FlushMode;
+import redis.clients.jedis.args.ListDirection;
 import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.BitPosParams;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.jrp.utils.BytesUtils.bytes;
 import static org.junit.jupiter.api.Assertions.*;
+import static redis.clients.jedis.params.LPosParams.lPosParams;
 
 public class RedisproxyAsyncServerTest {
 
@@ -445,29 +447,93 @@ public class RedisproxyAsyncServerTest {
     }
 
     @Test
+    public void testLmove() {
+        String k1 = getRandomString();
+        String k2 = getRandomString();
+        redis.rpush(k1, "one", "two", "three");
+        assertEquals("three", proxy.lmove(k1, k2, ListDirection.RIGHT, ListDirection.LEFT));
+        assertEquals("one", proxy.lmove(k1, k2, ListDirection.LEFT, ListDirection.RIGHT));
+        assertEquals("three", proxy.lmove(k2, k1, ListDirection.LEFT, ListDirection.LEFT));
+        assertEquals("one", proxy.lmove(k2, k1, ListDirection.RIGHT, ListDirection.RIGHT));
+        assertArrayEquals(new String[]{"three", "two", "one"}, redis.lrange(k1, 0, -1).toArray());
+    }
+
+    @Test
     public void testLpop() {
+        String k1 = getRandomString();
+        String k2 = getRandomString();
+        redis.rpush(k1, "one", "two", "three", "four", "five");
+        assertEquals("one", proxy.lpop(k1));
+        assertNull(proxy.lpop(k2));
+        assertArrayEquals(new String[]{"two", "three", "four"}, proxy.lpop(k1, 3).toArray());
+        assertTrue(proxy.lpop(k2, 3).isEmpty());
+    }
+
+    @Test
+    public void testRpop() {
+        String k1 = getRandomString();
+        String k2 = getRandomString();
+        redis.rpush(k1, "one", "two", "three", "four", "five");
+        assertEquals("five", proxy.rpop(k1));
+        assertNull(proxy.rpop(k2));
+        assertArrayEquals(new String[]{"four", "three", "two"}, proxy.rpop(k1, 3).toArray());
+        assertTrue(proxy.rpop(k2, 3).isEmpty());
+    }
+
+    @Test
+    public void testLpos() {
         String k = getRandomString();
-        redis.rpush(k, "one", "two", "three", "four", "five");
-        assertEquals("one", proxy.lpop(k));
+        redis.rpush(k, "a", "b", "c", "1", "2", "3", "c", "c");
+        assertEquals(2, proxy.lpos(k, "c"));
+        assertEquals(6, proxy.lpos(k, "c", lPosParams().rank(2)));
+        assertEquals(7, proxy.lpos(k, "c", lPosParams().rank(-1)));
+        assertArrayEquals(new Long[]{2L, 6L}, proxy.lpos(k, "c", lPosParams(), 2).toArray());
+        assertArrayEquals(new Long[]{2L, 6L, 7L}, proxy.lpos(k, "c", lPosParams(), 0).toArray());
+        assertArrayEquals(new Long[]{7L, 6L}, proxy.lpos(k, "c", lPosParams().rank(-1), 2).toArray());
+        assertArrayEquals(new Long[]{2L, 6L}, proxy.lpos(k, "c", lPosParams().maxlen(7), 3).toArray());
+        assertArrayEquals(new Long[]{6L},
+                proxy.lpos(k, "c", lPosParams().rank(2).maxlen(7), 3).toArray());
     }
 
     @Test
     public void testLpush() {
         String k = getRandomString();
-        assertEquals(1, proxy.lpush(k, "world"));
-        assertEquals(2, proxy.lpush(k, "hello"));
-        assertArrayEquals(new String[]{"hello", "world"}, redis.lrange(k, 0, -1).toArray());
+        assertEquals(1, proxy.lpush(k, "a"));
+        assertEquals(3, proxy.lpush(k, "b", "c"));
+        assertArrayEquals(new String[]{"c", "b", "a"}, redis.lrange(k, 0, -1).toArray());
+    }
+
+    @Test
+    public void testRpush() {
+        String k = getRandomString();
+        assertEquals(1, proxy.rpush(k, "a"));
+        assertEquals(3, proxy.rpush(k, "b", "c"));
+        assertArrayEquals(new String[]{"a", "b", "c"}, redis.lrange(k, 0, -1).toArray());
     }
 
     @Test
     public void testLpushx() {
         String k1 = getRandomString();
-        redis.lpush(k1, "World");
-        assertEquals(2, proxy.lpushx(k1, "Hello"));
-        assertArrayEquals(new String[]{"Hello", "World"}, redis.lrange(k1, 0, -1).toArray());
+        redis.lpush(k1, "a");
+        assertEquals(2, proxy.lpushx(k1, "1"));
+        assertEquals(4, proxy.lpushx(k1, "2", "3"));
+        assertArrayEquals(new String[]{"3", "2", "1", "a"}, redis.lrange(k1, 0, -1).toArray());
 
         String k2 = getRandomString();
-        assertEquals(0, proxy.lpushx(k2, "Hello"));
+        assertEquals(0, proxy.lpushx(k2, "b"));
+        assertTrue(redis.lrange(k2, 0, -1).isEmpty());
+    }
+
+    @Test
+    public void testRpushx() {
+        String k1 = getRandomString();
+        redis.lpush(k1, "a");
+        assertEquals(2, proxy.rpushx(k1, "1"));
+        assertEquals(4, proxy.rpushx(k1, "2", "3"));
+        assertArrayEquals(new String[]{"a", "1", "2", "3"}, redis.lrange(k1, 0, -1).toArray());
+
+        String k2 = getRandomString();
+        assertEquals(0, proxy.rpushx(k2, "b"));
         assertTrue(redis.lrange(k2, 0, -1).isEmpty());
     }
 
@@ -507,14 +573,6 @@ public class RedisproxyAsyncServerTest {
     }
 
     @Test
-    public void testRpop() {
-        String k = getRandomString();
-        redis.rpush(k, "one", "two", "three", "four", "five");
-        assertEquals("five", proxy.rpop(k));
-        assertArrayEquals(new String[]{"one", "two", "three", "four"}, redis.lrange(k, 0, -1).toArray());
-    }
-
-    @Test
     public void testRpoplpush() {
         String k1 = getRandomString();
         String k2 = getRandomString();
@@ -522,26 +580,6 @@ public class RedisproxyAsyncServerTest {
         assertEquals("three", proxy.rpoplpush(k1, k2));
         assertArrayEquals(new String[]{"one", "two"}, redis.lrange(k1, 0, -1).toArray());
         assertArrayEquals(new String[]{"three"}, redis.lrange(k2, 0, -1).toArray());
-    }
-
-    @Test
-    public void testRpush() {
-        String k = getRandomString();
-        assertEquals(1, proxy.rpush(k, "hello"));
-        assertEquals(2, proxy.rpush(k, "world"));
-        assertArrayEquals(new String[]{"hello", "world"}, redis.lrange(k, 0, -1).toArray());
-    }
-
-    @Test
-    public void testRpushx() {
-        String k1 = getRandomString();
-        redis.rpush(k1, "Hello");
-        assertEquals(2, proxy.rpushx(k1, "World"));
-        assertArrayEquals(new String[]{"Hello", "World"}, redis.lrange(k1, 0, -1).toArray());
-
-        String k2 = getRandomString();
-        assertEquals(0, proxy.rpushx(k2, "Hello"));
-        assertTrue(redis.lrange(k2, 0, -1).isEmpty());
     }
 
     @Test
