@@ -166,31 +166,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply del(byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public BulkReply dump(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply exists(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply expire(byte[] key, byte[] seconds) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply expireat(byte[] key, byte[] timestamp) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
     public SimpleStringReply unwatch() throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
@@ -237,71 +212,6 @@ public abstract class AbstractRedisServer implements RedisServer {
 
     @Override
     public Reply hincrby(byte[] key, byte[] field, byte[] increment) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public MultiBulkReply keys(byte[] pattern) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public IntegerReply move(byte[] key, byte[] db) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply persist(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply pexpire(byte[] key, byte[] milliseconds) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply pexpireat(byte[] key, byte[] millisecondsTs) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply pttl(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public BulkReply randomkey() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply rename(byte[] key, byte[] newkey) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply renamenx(byte[] key, byte[] newkey) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public SimpleStringReply restore(byte[] key, byte[] ttl, byte[] serializedValue) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sort(byte[] key, byte[][] pattern) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply ttl(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply type(byte[] key) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 
@@ -507,11 +417,6 @@ public abstract class AbstractRedisServer implements RedisServer {
 
     @Override
     public Reply zscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply scan(byte[] cursor, byte[][] attributes) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 

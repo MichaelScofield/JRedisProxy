@@ -595,11 +595,13 @@ public class RedisproxyAsyncServerTest {
     @Test
     public void testExists() {
         String k1 = getRandomString();
-        redis.set(k1, "Hello");
-        assertTrue(proxy.exists(k1));
-
         String k2 = getRandomString();
-        assertFalse(proxy.exists(k2));
+        String k3 = getRandomString();
+        redis.set(k1, "a");
+        redis.set(k2, "b");
+        assertTrue(proxy.exists(k1));
+        assertEquals(2, proxy.exists(k1, k2));
+        assertEquals(2, proxy.exists(k1, k2, k3));
     }
 
     @Test

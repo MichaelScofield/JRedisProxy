@@ -16,7 +16,7 @@ import static org.jrp.reply.SimpleStringReply.*;
 // TODO Split into multiple sub servers (category in Redis command groups).
 // TODO Implement all "server" group commands.
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer {
+public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer, RedisGenericServer {
 
     ProxyConfig getProxyConfig();
 
@@ -106,60 +106,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         long micros = now.getNano() / 1000 % 1_000_000;
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
-
-    @RWType(type = WRITE)
-    Reply del(byte[][] keys) throws RedisException;
-
-    @RWType(type = READ)
-    BulkReply dump(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply exists(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply expire(byte[] key, byte[] seconds) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply expireat(byte[] key, byte[] timestamp) throws RedisException;
-
-    @RWType(type = READ)
-    MultiBulkReply keys(byte[] pattern0) throws RedisException;
-
-    @RWType(type = WRITE)
-    IntegerReply move(byte[] key, byte[] db) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply persist(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply pexpire(byte[] key, byte[] milliseconds) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply pexpireat(byte[] key, byte[] millisecondsTimestamp) throws RedisException;
-
-    @RWType(type = READ)
-    Reply pttl(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    BulkReply randomkey() throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply rename(byte[] key, byte[] newkey) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply renamenx(byte[] key, byte[] newkey) throws RedisException;
-
-    @RWType(type = WRITE)
-    SimpleStringReply restore(byte[] key, byte[] ttl, byte[] serializedValue) throws RedisException;
-
-    @RWType(type = READ)
-    Reply sort(byte[] key, byte[][] pattern) throws RedisException;
-
-    @RWType(type = READ)
-    Reply ttl(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply type(byte[] key) throws RedisException;
 
     SimpleStringReply unwatch() throws RedisException;
 
@@ -308,9 +254,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
 
     @RWType(type = READ)
     Reply zscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException;
-
-    @RWType(type = READ)
-    Reply scan(byte[] cursor, byte[][] attributes) throws RedisException;
 
     Reply subscribe(byte[][] channels) throws RedisException;
 
