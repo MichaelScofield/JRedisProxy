@@ -14,7 +14,6 @@ import static org.jrp.cmd.RWType.Type.WRITE;
 import static org.jrp.reply.SimpleStringReply.*;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
-// TODO Implement all "server" group commands.
 @SuppressWarnings("unused")
 public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer, RedisGenericServer {
 

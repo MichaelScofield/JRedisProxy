@@ -7,7 +7,6 @@ import org.jrp.reply.Reply;
 import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
 
-// TODO Implement all commands in Generic command group.
 @SuppressWarnings("unused")
 public interface RedisGenericServer {
 

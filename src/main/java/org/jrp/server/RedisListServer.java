@@ -8,29 +8,8 @@ import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
 import static org.jrp.utils.BytesUtils.bytes;
 
-// TODO Implement all commands in List command group; specifically the blocking ones.
 @SuppressWarnings("unused")
 public interface RedisListServer {
-
-    @RWType(type = WRITE)
-    default Reply blmove(byte[] source, byte[] destination, byte[] whereFrom, byte[] whereTo, byte[] timeout) {
-        return ErrorReply.NOT_IMPL;
-    }
-
-    @RWType(type = WRITE)
-    default Reply blpop(byte[][] keys) {
-        return ErrorReply.NOT_IMPL;
-    }
-
-    @RWType(type = WRITE)
-    default Reply brpop(byte[][] keys) {
-        return ErrorReply.NOT_IMPL;
-    }
-
-    @RWType(type = WRITE)
-    default Reply brpoplpush(byte[] source, byte[] destination, byte[] timeout) {
-        return blmove(source, destination, bytes("RIGHT"), bytes("LEFT"), timeout);
-    }
 
     @RWType(type = READ)
     default Reply lindex(byte[] key, byte[] index) {
