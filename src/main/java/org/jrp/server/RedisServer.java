@@ -20,23 +20,12 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
 
     ProxyConfig getProxyConfig();
 
-    // TODO How to implement "AUTH" command?
-    //  Read the Redis ACL guide first: https://redis.io/topics/acl
-    default Reply auth(byte[] password) {
-        return ErrorReply.NOT_IMPL;
-    }
-
     default Reply client(byte[][] args) {
         return ErrorReply.NOT_IMPL;
     }
 
     default BulkReply echo(byte[] message) {
         return BulkReply.bulkReply(message);
-    }
-
-    // TODO Implement "HELLO" command (after "AUTH" command)
-    default Reply hello(byte[][] options) {
-        return ErrorReply.NOT_IMPL;
     }
 
     default Reply ping(byte[] message) {
