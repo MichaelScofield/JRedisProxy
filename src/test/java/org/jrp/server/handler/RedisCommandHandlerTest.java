@@ -87,7 +87,7 @@ public class RedisCommandHandlerTest {
 
         Command setCommand = new Command(new byte[][]{bytes("SET"), bytes(key), bytes(value)});
         Command getCommand = new Command(new byte[][]{bytes("GET"), bytes(key)});
-        Command evalCommand = new Command(new byte[][]{bytes("EVAL")});
+        Command dbsizeCommand = new Command(new byte[][]{bytes("DBSIZE")});
 
         channel.writeInbound(setCommand);
         channel.flush();
@@ -99,14 +99,14 @@ public class RedisCommandHandlerTest {
         Reply reply2 = channel.readOutbound();
         assertEquals(value, reply2.toString());
 
-        channel.writeInbound(evalCommand);
+        channel.writeInbound(dbsizeCommand);
         channel.flush();
         Reply reply3 = channel.readOutbound();
         assertEquals("1", reply3.toString());
 
         assertEquals("embedded", setCommand.getClientAddress());
         assertEquals("embedded", getCommand.getClientAddress());
-        assertEquals("embedded", evalCommand.getClientAddress());
+        assertEquals("embedded", dbsizeCommand.getClientAddress());
 
         long procReadAfter = RedisproxyMetrics.getCurrent().procRead.get();
         long procWriteAfter = RedisproxyMetrics.getCurrent().procWrite.get();
@@ -357,7 +357,7 @@ public class RedisCommandHandlerTest {
         }
 
         @Override
-        public Reply eval(byte[] script, byte[] numkeys, byte[][] key) {
+        public Reply dbsize() {
             return IntegerReply.integer(1);
         }
 

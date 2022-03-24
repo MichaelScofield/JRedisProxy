@@ -166,31 +166,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public SimpleStringReply unwatch() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public SimpleStringReply watch(byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply eval(byte[] script, byte[] numkeys, byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply evalsha(byte[] sha, byte[] numkeys, byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply script(byte[][] args) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
     public Reply hdel(byte[] key, byte[][] fields) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }

@@ -96,16 +96,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
 
-    SimpleStringReply unwatch() throws RedisException;
-
-    SimpleStringReply watch(byte[][] key) throws RedisException;
-
-    Reply eval(byte[] script0, byte[] numkeys1, byte[][] key2) throws RedisException;
-
-    Reply evalsha(byte[] sha10, byte[] numkeys1, byte[][] key2) throws RedisException;
-
-    Reply script(byte[][] args) throws RedisException;
-
     @RWType(type = WRITE)
     Reply hdel(byte[] key, byte[][] field) throws RedisException;
 
