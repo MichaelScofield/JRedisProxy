@@ -1200,8 +1200,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply pfadd(byte[] rawkey, byte[][] elements) {
-        RedisFuture<Long> future = getRedisClient().pfadd(rawkey, elements);
+    public Reply pfadd(byte[] key, byte[][] elements) {
+        RedisFuture<Long> future = getRedisClient().pfadd(key, elements);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -1212,8 +1212,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply pfmerge(byte[] rawkey, byte[][] keys) {
-        RedisFuture<String> future = getRedisClient().pfmerge(rawkey, keys);
+    public Reply pfmerge(byte[] destkey, byte[][] sourceKeys) {
+        RedisFuture<String> future = getRedisClient().pfmerge(destkey, sourceKeys);
         return new FutureReply<>(future, SimpleStringReply::from);
     }
 

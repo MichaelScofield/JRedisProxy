@@ -184,34 +184,4 @@ public abstract class AbstractRedisServer implements RedisServer {
         // TODO Implement real reset: https://redis.io/commands/reset
         return RESET;
     }
-
-    @Override
-    public Reply pfadd(byte[] key, byte[][] elements) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply pfcount(byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply pfmerge(byte[] key, byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply multi() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply exec() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public SimpleStringReply discard() throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
 }

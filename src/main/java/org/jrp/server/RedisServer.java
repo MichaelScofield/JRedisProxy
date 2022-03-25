@@ -1,20 +1,17 @@
 package org.jrp.server;
 
-import org.jrp.cmd.RWType;
 import org.jrp.config.ProxyConfig;
-import org.jrp.exception.RedisException;
 import org.jrp.monitor.Monitor;
 import org.jrp.reply.*;
 
 import java.time.Instant;
 import java.util.Arrays;
 
-import static org.jrp.cmd.RWType.Type.WRITE;
 import static org.jrp.reply.SimpleStringReply.*;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisGenericServer,
+public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisGenericServer, RedisHyperLogLogServer,
         RedisListServer, RedisHashServer, RedisSetServer, RedisSortedSetServer {
 
     ProxyConfig getProxyConfig();
@@ -94,19 +91,4 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         long micros = now.getNano() / 1000 % 1_000_000;
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
-
-    @RWType(type = WRITE)
-    Reply pfadd(byte[] key, byte[][] elements) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply pfcount(byte[][] keys) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply pfmerge(byte[] key, byte[][] keys) throws RedisException;
-
-    Reply multi() throws RedisException;
-
-    Reply exec() throws RedisException;
-
-    SimpleStringReply discard() throws RedisException;
 }
