@@ -9,7 +9,6 @@ import java.util.Arrays;
 
 import static org.jrp.reply.SimpleStringReply.*;
 
-// TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
 public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisGenericServer, RedisHyperLogLogServer,
         RedisListServer, RedisHashServer, RedisSetServer, RedisSortedSetServer {

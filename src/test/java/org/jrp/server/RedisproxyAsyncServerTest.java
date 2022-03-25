@@ -15,10 +15,7 @@ import redis.clients.jedis.args.FlushMode;
 import redis.clients.jedis.args.ListDirection;
 import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.params.BitPosParams;
-import redis.clients.jedis.params.GetExParams;
-import redis.clients.jedis.params.SetParams;
-import redis.clients.jedis.params.ZParams;
+import redis.clients.jedis.params.*;
 import redis.clients.jedis.resps.Slowlog;
 import redis.clients.jedis.resps.Tuple;
 
@@ -714,6 +711,47 @@ public class RedisproxyAsyncServerTest {
         redis.set(k2, "World");
         assertEquals(0, proxy.renamenx(k1, k2));
         assertEquals("World", redis.get(k2));
+    }
+
+    @Test
+    public void testSort() {
+        String k1 = getRandomString();
+        redis.rpush(k1, "2", "1", "4", "3");
+        assertArrayEquals(new String[]{"1", "2", "3", "4"}, proxy.sort(k1).toArray());
+
+        assertArrayEquals(new String[]{"2", "3"},
+                proxy.sort(k1, new SortingParams().limit(1, 2)).toArray());
+
+        assertArrayEquals(new String[]{"1", "2", "3", "4"}, proxy.sort(k1, new SortingParams().asc()).toArray());
+        assertArrayEquals(new String[]{"4", "3", "2", "1"}, proxy.sort(k1, new SortingParams().desc()).toArray());
+
+        String k2 = getRandomString();
+        redis.rpush(k2, "b", "a", "d", "c");
+        assertArrayEquals(new String[]{"a", "b", "c", "d"}, proxy.sort(k2, new SortingParams().alpha()).toArray());
+
+        redis.mset("weight_a", "4", "weight_b", "3", "weight_c", "2", "weight_d", "1");
+        assertArrayEquals(new String[]{"d", "c", "b", "a"},
+                proxy.sort(k2, new SortingParams().by("weight_*")).toArray());
+        assertArrayEquals(new String[]{"b", "a", "d", "c"},
+                proxy.sort(k2, new SortingParams().by("nosort")).toArray());
+
+        redis.mset("object_a", "v1", "object_b", "v2", "object_c", "v3", "object_d", "v4");
+        redis.mset("value_a", "v11", "value_b", "v22", "value_c", "v33", "value_d", "v44");
+        assertArrayEquals(new String[]{
+                "v4", "v44", "d",
+                "v3", "v33", "c",
+                "v2", "v22", "b",
+                "v1", "v11", "a"
+        }, proxy.sort(k2, new SortingParams().by("weight_*")
+                .get("object_*")
+                .get("value_*")
+                .get("#")).toArray());
+
+        String k3 = getRandomString();
+        String k4 = getRandomString();
+        redis.rpush(k3, "-1", "-2", "-3");
+        assertEquals(3, proxy.sort(k3, k4));
+        assertArrayEquals(new String[]{"-3", "-2", "-1"}, redis.lrange(k4, 0, -1).toArray());
     }
 
     @Test

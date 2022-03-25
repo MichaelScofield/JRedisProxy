@@ -23,7 +23,6 @@ import static io.lettuce.core.BitFieldArgs.*;
 import static org.jrp.cmd.RedisKeyword.*;
 import static org.jrp.utils.BytesUtils.*;
 
-// TODO Split this huge implementation.
 public class RedisproxyAsyncServer extends AbstractRedisServer {
 
     private static final Logger LOGGER = LogManager.getLogger(RedisproxyAsyncServer.class);
@@ -626,7 +625,6 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, IntegerReply::integer);
     }
 
-    // TODO lack of unit tests
     @Override
     public Reply sort(byte[] key, byte[][] args) throws RedisException {
         RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
