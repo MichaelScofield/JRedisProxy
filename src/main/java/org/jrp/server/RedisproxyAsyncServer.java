@@ -561,32 +561,32 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply hdel(byte[] rawkey, byte[][] fields) {
-        RedisFuture<Long> future = getRedisClient().hdel(rawkey, fields);
+    public Reply hdel(byte[] key, byte[][] fields) {
+        RedisFuture<Long> future = getRedisClient().hdel(key, fields);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply hexists(byte[] rawkey, byte[] field) {
-        RedisFuture<Boolean> future = getRedisClient().hexists(rawkey, field);
+    public Reply hexists(byte[] key, byte[] field) {
+        RedisFuture<Boolean> future = getRedisClient().hexists(key, field);
         return new FutureReply<>(future, IntegerReply::integer);
     }
 
     @Override
-    public Reply hget(byte[] rawkey, byte[] field) {
-        RedisFuture<byte[]> future = getRedisClient().hget(rawkey, field);
+    public Reply hget(byte[] key, byte[] field) {
+        RedisFuture<byte[]> future = getRedisClient().hget(key, field);
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
     @Override
-    public Reply hgetall(byte[] rawkey) {
-        RedisFuture<Map<byte[], byte[]>> future = getRedisClient().hgetall(rawkey);
+    public Reply hgetall(byte[] key) {
+        RedisFuture<Map<byte[], byte[]>> future = getRedisClient().hgetall(key);
         return new FutureReply<>(future, MultiBulkReply::fromBytesMap);
     }
 
     @Override
-    public Reply hincrby(byte[] rawkey, byte[] field, byte[] amount) {
-        RedisFuture<Long> future = getRedisClient().hincrby(rawkey, field, toLong(amount));
+    public Reply hincrby(byte[] key, byte[] field, byte[] increment) {
+        RedisFuture<Long> future = getRedisClient().hincrby(key, field, toLong(increment));
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -1019,68 +1019,68 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply hincrbyfloat(byte[] rawkey, byte[] field, byte[] increment) {
-        RedisFuture<Double> future = getRedisClient().hincrbyfloat(rawkey, field, toDouble(increment));
+    public Reply hincrbyfloat(byte[] key, byte[] field, byte[] increment) {
+        RedisFuture<Double> future = getRedisClient().hincrbyfloat(key, field, toDouble(increment));
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
     @Override
-    public Reply hkeys(byte[] rawkey) {
-        RedisFuture<List<byte[]>> future = getRedisClient().hkeys(rawkey);
+    public Reply hkeys(byte[] key) {
+        RedisFuture<List<byte[]>> future = getRedisClient().hkeys(key);
         return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     @Override
-    public Reply hlen(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().hlen(rawkey);
+    public Reply hlen(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().hlen(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply hmget(byte[] rawkey, byte[][] fields) {
-        RedisFuture<List<KeyValue<byte[], byte[]>>> future = getRedisClient().hmget(rawkey, fields);
+    public Reply hmget(byte[] key, byte[][] fields) {
+        RedisFuture<List<KeyValue<byte[], byte[]>>> future = getRedisClient().hmget(key, fields);
         return new FutureReply<>(future, MultiBulkReply::fromKeyValues);
     }
 
     @Override
-    public Reply hmset(byte[] rawkey, byte[][] fieldsAndValues) {
+    public Reply hmset(byte[] key, byte[][] fieldsAndValues) {
         Map<byte[], byte[]> map = new HashMap<>();
         for (int i = 0; i < fieldsAndValues.length; i += 2) {
             map.put(fieldsAndValues[i], fieldsAndValues[i + 1]);
         }
-        RedisFuture<String> future = getRedisClient().hmset(rawkey, map);
+        RedisFuture<String> future = getRedisClient().hmset(key, map);
         return new FutureReply<>(future, SimpleStringReply::from);
     }
 
     @Override
-    public Reply hset(byte[] rawkey, byte[][] fieldsAndValues) {
+    public Reply hset(byte[] key, byte[][] fieldsAndValues) {
         Map<byte[], byte[]> map = new HashMap<>();
         for (int i = 0; i < fieldsAndValues.length; i += 2) {
             map.put(fieldsAndValues[i], fieldsAndValues[i + 1]);
         }
-        RedisFuture<Long> future = getRedisClient().hset(rawkey, map);
+        RedisFuture<Long> future = getRedisClient().hset(key, map);
         return new FutureReply<>(future, IntegerReply::integer);
     }
 
     @Override
-    public Reply hsetnx(byte[] rawkey, byte[] field, byte[] value) {
-        RedisFuture<Boolean> future = getRedisClient().hsetnx(rawkey, field, value);
+    public Reply hsetnx(byte[] key, byte[] field, byte[] value) {
+        RedisFuture<Boolean> future = getRedisClient().hsetnx(key, field, value);
         return new FutureReply<>(future, IntegerReply::integer);
     }
 
     @Override
-    public Reply hvals(byte[] rawkey) {
-        RedisFuture<List<byte[]>> future = getRedisClient().hvals(rawkey);
+    public Reply hvals(byte[] key) {
+        RedisFuture<List<byte[]>> future = getRedisClient().hvals(key);
         return new FutureReply<>(future, MultiBulkReply::from);
     }
 
     // TODO lack of unit tests
     @Override
-    public Reply hscan(byte[] rawkey, byte[] cursor, byte[][] attributes) throws RedisException {
+    public Reply hscan(byte[] key, byte[] cursor, byte[][] args) throws RedisException {
         ScanCursor scanCursor = new ScanCursor(string(cursor), false);
-        ScanArgs scanArgs = getScanArgs(attributes);
+        ScanArgs scanArgs = getScanArgs(args);
         RedisFuture<MapScanCursor<byte[], byte[]>> future =
-                getRedisClient().hscan(rawkey, scanCursor, scanArgs);
+                getRedisClient().hscan(key, scanCursor, scanArgs);
         return new FutureReply<>(future, mapScanCursor -> new MultiBulkReply(new Reply[]{
                 BulkReply.bulkReply(mapScanCursor.getCursor()),
                 MultiBulkReply.fromBytesMap(mapScanCursor.getMap())}));

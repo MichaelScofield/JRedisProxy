@@ -15,7 +15,8 @@ import static org.jrp.reply.SimpleStringReply.*;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer, RedisGenericServer {
+public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer, RedisGenericServer,
+        RedisHashServer {
 
     ProxyConfig getProxyConfig();
 
@@ -94,48 +95,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         long micros = now.getNano() / 1000 % 1_000_000;
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
-
-    @RWType(type = WRITE)
-    Reply hdel(byte[] key, byte[][] field) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hexists(byte[] key, byte[] field) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hget(byte[] key, byte[] field) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hgetall(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply hincrby(byte[] key, byte[] field, byte[] increment) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply hincrbyfloat(byte[] key, byte[] field, byte[] increment) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hkeys(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hlen(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hmget(byte[] key, byte[][] fields) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply hmset(byte[] key, byte[][] fieldsAndValues) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply hset(byte[] key, byte[][] fieldsAndValues) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply hsetnx(byte[] key, byte[] field, byte[] value) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hvals(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply hscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException;
 
     @RWType(type = WRITE)
     IntegerReply publish(byte[] channel0, byte[] message1) throws RedisException;

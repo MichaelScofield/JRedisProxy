@@ -166,31 +166,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply hdel(byte[] key, byte[][] fields) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hexists(byte[] key, byte[] field) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hget(byte[] key, byte[] field) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hgetall(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hincrby(byte[] key, byte[] field, byte[] increment) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
     public Reply sdiff(byte[][] key) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
@@ -312,51 +287,6 @@ public abstract class AbstractRedisServer implements RedisServer {
 
     @Override
     public Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hincrbyfloat(byte[] key, byte[] field, byte[] increment) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hkeys(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hlen(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hmget(byte[] key, byte[][] fields) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hmset(byte[] key, byte[][] fieldsAndValues) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hset(byte[] key, byte[][] fieldsAndValues) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hsetnx(byte[] key, byte[] field, byte[] value) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hvals(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply hscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 
