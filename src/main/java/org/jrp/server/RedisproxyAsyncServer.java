@@ -728,14 +728,14 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply sismember(byte[] rawkey, byte[] member) {
-        RedisFuture<Boolean> future = getRedisClient().sismember(rawkey, member);
+    public Reply sismember(byte[] key, byte[] member) {
+        RedisFuture<Boolean> future = getRedisClient().sismember(key, member);
         return new FutureReply<>(future, IntegerReply::integer);
     }
 
     @Override
-    public Reply smembers(byte[] rawkey) {
-        RedisFuture<Set<byte[]>> future = getRedisClient().smembers(rawkey);
+    public Reply smembers(byte[] key) {
+        RedisFuture<Set<byte[]>> future = getRedisClient().smembers(key);
         return new FutureReply<>(future, MultiBulkReply::from);
     }
 
@@ -746,25 +746,30 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply spop(byte[] rawkey) {
-        RedisFuture<byte[]> future = getRedisClient().spop(rawkey);
-        return new FutureReply<>(future, BulkReply::bulkReply);
-    }
-
-    @Override
-    public Reply srandmember(byte[] rawkey, byte[] count) {
+    public Reply spop(byte[] key, byte[] count) {
         if (count == null) {
-            RedisFuture<byte[]> future = getRedisClient().srandmember(rawkey);
+            RedisFuture<byte[]> future = getRedisClient().spop(key);
             return new FutureReply<>(future, BulkReply::bulkReply);
         } else {
-            RedisFuture<List<byte[]>> future = getRedisClient().srandmember(rawkey, toLong(count));
+            RedisFuture<Set<byte[]>> future = getRedisClient().spop(key, toLong(count));
             return new FutureReply<>(future, MultiBulkReply::from);
         }
     }
 
     @Override
-    public Reply srem(byte[] rawkey, byte[][] members) {
-        RedisFuture<Long> future = getRedisClient().srem(rawkey, members);
+    public Reply srandmember(byte[] key, byte[] count) {
+        if (count == null) {
+            RedisFuture<byte[]> future = getRedisClient().srandmember(key);
+            return new FutureReply<>(future, BulkReply::bulkReply);
+        } else {
+            RedisFuture<List<byte[]>> future = getRedisClient().srandmember(key, toLong(count));
+            return new FutureReply<>(future, MultiBulkReply::from);
+        }
+    }
+
+    @Override
+    public Reply srem(byte[] key, byte[][] members) {
+        RedisFuture<Long> future = getRedisClient().srem(key, members);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -1116,14 +1121,14 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply sadd(byte[] rawkey, byte[][] members) {
-        RedisFuture<Long> future = getRedisClient().sadd(rawkey, members);
+    public Reply sadd(byte[] key, byte[][] members) {
+        RedisFuture<Long> future = getRedisClient().sadd(key, members);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply scard(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().scard(rawkey);
+    public Reply scard(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().scard(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 

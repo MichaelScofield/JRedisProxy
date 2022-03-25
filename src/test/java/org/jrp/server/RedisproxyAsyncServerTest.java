@@ -824,6 +824,8 @@ public class RedisproxyAsyncServerTest {
         String k = getRandomString();
         redis.sadd(k, "one");
         assertEquals("one", proxy.spop(k));
+        redis.sadd(k, "m1", "m2");
+        assertArrayEquals(new String[]{"m1", "m2"}, proxy.spop(k, 2).stream().sorted().toArray());
     }
 
     @Test

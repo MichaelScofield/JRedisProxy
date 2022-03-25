@@ -166,66 +166,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply sdiff(byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sdiffstore(byte[] destination, byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sinter(byte[][] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sinterstore(byte[] destination, byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sismember(byte[] key, byte[] member) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply smembers(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply smove(byte[] source, byte[] destination, byte[] member) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply spop(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply srandmember(byte[] key, byte[] count) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply srem(byte[] key, byte[][] members) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sunion(byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sunionstore(byte[] destination, byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
     public Reply zadd(byte[] key, byte[][] args) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
@@ -287,21 +227,6 @@ public abstract class AbstractRedisServer implements RedisServer {
 
     @Override
     public Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public IntegerReply publish(byte[] channel, byte[] message) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply sadd(byte[] key0, byte[][] members) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply scard(byte[] key) throws RedisException {
         throw NOT_IMPLEMENTED_ERROR;
     }
 

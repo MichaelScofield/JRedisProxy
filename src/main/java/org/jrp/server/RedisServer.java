@@ -15,8 +15,8 @@ import static org.jrp.reply.SimpleStringReply.*;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
-public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisListServer, RedisGenericServer,
-        RedisHashServer {
+public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisGenericServer,
+        RedisListServer, RedisHashServer, RedisSetServer {
 
     ProxyConfig getProxyConfig();
 
@@ -95,51 +95,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         long micros = now.getNano() / 1000 % 1_000_000;
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
-
-    @RWType(type = WRITE)
-    IntegerReply publish(byte[] channel0, byte[] message1) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply sadd(byte[] key, byte[][] member) throws RedisException;
-
-    @RWType(type = READ)
-    Reply scard(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply sdiff(byte[][] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply sdiffstore(byte[] destination, byte[][] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply sinter(byte[][] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply sinterstore(byte[] destination, byte[][] keys) throws RedisException;
-
-    @RWType(type = READ)
-    Reply sismember(byte[] key, byte[] member) throws RedisException;
-
-    @RWType(type = READ)
-    Reply smembers(byte[] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply smove(byte[] source, byte[] destination, byte[] member) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply spop(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply srandmember(byte[] key, byte[] count) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply srem(byte[] key, byte[][] member) throws RedisException;
-
-    @RWType(type = READ)
-    Reply sunion(byte[][] key) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply sunionstore(byte[] destination, byte[][] keys) throws RedisException;
 
     @RWType(type = WRITE)
     Reply zadd(byte[] key, byte[][] args) throws RedisException;
