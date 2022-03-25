@@ -166,96 +166,6 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply zadd(byte[] key, byte[][] args) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zcard(byte[] key) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zcount(byte[] key, byte[] min, byte[] max) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zincrby(byte[] key, byte[] increment, byte[] member) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zinterstore(byte[] destination, byte[] numkeys, byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrange(byte[] key, byte[] start, byte[] stop, byte[] withscores) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrangebyscore(byte[] key, byte[] min, byte[] max, byte[][] args) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrank(byte[] key0, byte[] member1) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrem(byte[] key, byte[][] members) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zremrangebyrank(byte[] key, byte[] start, byte[] stop) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zremrangebyscore(byte[] key, byte[] min, byte[] max) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrevrange(byte[] key, byte[] start, byte[] stop, byte[] withscores) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zrevrank(byte[] key, byte[] member) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zscore(byte[] key0, byte[] member) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zunionstore(byte[] destination, byte[] numkeys, byte[][] keys) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply zscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
-    public Reply subscribe(byte[][] bytes) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
-    }
-
-    @Override
     public final Reply command(byte[] subcommand, byte[][] options) {
         if (subcommand == null) {
             // TODO Implement the "COMMAND" command: https://redis.io/commands/command (after everything has done).
@@ -267,11 +177,6 @@ public abstract class AbstractRedisServer implements RedisServer {
             case DOCS, GETKEYS, GETKEYSANDFLAGS, INFO, LIST -> throw NOT_IMPLEMENTED_ERROR;
             default -> ErrorReply.SYNTAX_ERROR;
         };
-    }
-
-    @Override
-    public Reply unsubscribe(byte[][] bytes) throws RedisException {
-        throw NOT_IMPLEMENTED_ERROR;
     }
 
     @Override

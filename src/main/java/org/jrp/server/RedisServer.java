@@ -9,14 +9,13 @@ import org.jrp.reply.*;
 import java.time.Instant;
 import java.util.Arrays;
 
-import static org.jrp.cmd.RWType.Type.READ;
 import static org.jrp.cmd.RWType.Type.WRITE;
 import static org.jrp.reply.SimpleStringReply.*;
 
 // TODO Split into multiple sub servers (category in Redis command groups).
 @SuppressWarnings("unused")
 public interface RedisServer extends RedisStringServer, RedisBitmapServer, RedisGenericServer,
-        RedisListServer, RedisHashServer, RedisSetServer {
+        RedisListServer, RedisHashServer, RedisSetServer, RedisSortedSetServer {
 
     ProxyConfig getProxyConfig();
 
@@ -95,61 +94,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         long micros = now.getNano() / 1000 % 1_000_000;
         return MultiBulkReply.from(Arrays.asList(String.valueOf(epochSecond), String.valueOf(micros)));
     }
-
-    @RWType(type = WRITE)
-    Reply zadd(byte[] key, byte[][] args) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zcard(byte[] key) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zcount(byte[] key, byte[] min, byte[] max) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply zincrby(byte[] key, byte[] increment, byte[] member) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply zinterstore(byte[] destination, byte[] numkeys, byte[][] keys) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zrange(byte[] key, byte[] start, byte[] stop, byte[] withscores) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zrangebyscore(byte[] key, byte[] min, byte[] max, byte[][] args) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zrank(byte[] key, byte[] member) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply zrem(byte[] key, byte[][] member) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply zremrangebyrank(byte[] key, byte[] start, byte[] stop) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply zremrangebyscore(byte[] key, byte[] min, byte[] max) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zrevrange(byte[] key, byte[] start, byte[] stop, byte[] withscores) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zrevrank(byte[] key, byte[] member) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zscore(byte[] key, byte[] member) throws RedisException;
-
-    @RWType(type = WRITE)
-    Reply zunionstore(byte[] destination, byte[] numkeys, byte[][] keys) throws RedisException;
-
-    @RWType(type = READ)
-    Reply zscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException;
-
-    Reply subscribe(byte[][] channels) throws RedisException;
-
-    Reply unsubscribe(byte[][] channel) throws RedisException;
 
     @RWType(type = WRITE)
     Reply pfadd(byte[] key, byte[][] elements) throws RedisException;

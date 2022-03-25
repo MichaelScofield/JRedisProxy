@@ -785,9 +785,9 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, IntegerReply::new);
     }
 
-    // TODO parse "ZAddArgs"
+    // TODO parse "ZAddArgs": https://redis.io/commands/zadd/
     @Override
-    public Reply zadd(byte[] rawkey, byte[][] args) {
+    public Reply zadd(byte[] key, byte[][] args) {
         if (args.length % 2 != 0) {
             return ErrorReply.SYNTAX_ERROR;
         }
@@ -800,13 +800,13 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             scoreValues[j] = ScoredValue.just(score, member);
         }
         //noinspection unchecked
-        RedisFuture<Long> future = getRedisClient().zadd(rawkey, scoreValues);
+        RedisFuture<Long> future = getRedisClient().zadd(key, scoreValues);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply zcard(byte[] rawkey) {
-        RedisFuture<Long> future = getRedisClient().zcard(rawkey);
+    public Reply zcard(byte[] key) {
+        RedisFuture<Long> future = getRedisClient().zcard(key);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
@@ -819,8 +819,8 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply zincrby(byte[] rawkey, byte[] increment, byte[] member) {
-        RedisFuture<Double> future = getRedisClient().zincrby(rawkey, toDouble(increment), member);
+    public Reply zincrby(byte[] key, byte[] increment, byte[] member) {
+        RedisFuture<Double> future = getRedisClient().zincrby(key, toDouble(increment), member);
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
@@ -951,31 +951,32 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply zrank(byte[] rawkey, byte[] member) {
-        RedisFuture<Long> future = getRedisClient().zrank(rawkey, member);
+    public Reply zrank(byte[] key, byte[] member) {
+        RedisFuture<Long> future = getRedisClient().zrank(key, member);
         return new FutureReply<>(future, i -> i == null ? BulkReply.NIL_REPLY : IntegerReply.integer(i));
     }
 
     @Override
-    public Reply zrem(byte[] rawkey, byte[][] members) {
-        RedisFuture<Long> future = getRedisClient().zrem(rawkey, members);
+    public Reply zrem(byte[] key, byte[][] members) {
+        RedisFuture<Long> future = getRedisClient().zrem(key, members);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     @Override
-    public Reply zremrangebyrank(byte[] rawkey, byte[] start, byte[] stop) {
-        RedisFuture<Long> future = getRedisClient().zremrangebyrank(rawkey, toLong(start), toLong(stop));
+    public Reply zremrangebyrank(byte[] key, byte[] start, byte[] stop) {
+        RedisFuture<Long> future = getRedisClient().zremrangebyrank(key, toLong(start), toLong(stop));
         return new FutureReply<>(future, IntegerReply::new);
     }
 
     // TODO parse range like min = "(2"
     @Override
-    public Reply zremrangebyscore(byte[] rawkey, byte[] min, byte[] max) {
+    public Reply zremrangebyscore(byte[] key, byte[] min, byte[] max) {
         Range<Double> range = Range.create(toDouble(min), toDouble(max));
-        RedisFuture<Long> future = getRedisClient().zremrangebyscore(rawkey, range);
+        RedisFuture<Long> future = getRedisClient().zremrangebyscore(key, range);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
+    // TODO replace with zrange: https://redis.io/commands/zrevrange/
     @Override
     public Reply zrevrange(byte[] rawkey, byte[] startBytes, byte[] stopBytes, byte[] withScores) {
         RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
@@ -993,11 +994,11 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     // TODO lack of unit tests
     // TODO parse range like min = "(2"
     @Override
-    public Reply zrevrangebyscore(byte[] rawkey, byte[] max, byte[] min, byte[][] args) throws RedisException {
+    public Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) throws RedisException {
         RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
         Range<Double> range = Range.create(toDouble(min), toDouble(max));
         if (args == null) {
-            RedisFuture<List<byte[]>> future = client.zrevrangebyscore(rawkey, range);
+            RedisFuture<List<byte[]>> future = client.zrevrangebyscore(key, range);
             return new FutureReply<>(future, MultiBulkReply::from);
         }
 
@@ -1005,19 +1006,19 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         if (scoreAttributes.withScores()) {
             RedisFuture<List<ScoredValue<byte[]>>> future;
             if (scoreAttributes.limit()) {
-                future = client.zrevrangebyscoreWithScores(rawkey, range,
+                future = client.zrevrangebyscoreWithScores(key, range,
                         Limit.create(scoreAttributes.offset(), scoreAttributes.count()));
             } else {
-                future = client.zrevrangebyscoreWithScores(rawkey, range);
+                future = client.zrevrangebyscoreWithScores(key, range);
             }
             return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
         } else {
             RedisFuture<List<byte[]>> future;
             if (scoreAttributes.limit()) {
-                future = client.zrevrangebyscore(rawkey, range,
+                future = client.zrevrangebyscore(key, range,
                         Limit.create(scoreAttributes.offset(), scoreAttributes.count()));
             } else {
-                future = client.zrevrangebyscore(rawkey, range);
+                future = client.zrevrangebyscore(key, range);
             }
             return new FutureReply<>(future, MultiBulkReply::from);
         }
@@ -1133,14 +1134,14 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply zrevrank(byte[] rawkey, byte[] member) {
-        RedisFuture<Long> future = getRedisClient().zrevrank(rawkey, member);
+    public Reply zrevrank(byte[] key, byte[] member) {
+        RedisFuture<Long> future = getRedisClient().zrevrank(key, member);
         return new FutureReply<>(future, i -> i == null ? BulkReply.NIL_REPLY : IntegerReply.integer(i));
     }
 
     @Override
-    public Reply zscore(byte[] rawkey, byte[] member) {
-        RedisFuture<Double> future = getRedisClient().zscore(rawkey, member);
+    public Reply zscore(byte[] key, byte[] member) {
+        RedisFuture<Double> future = getRedisClient().zscore(key, member);
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
@@ -1165,10 +1166,10 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
 
     // TODO lack of unit tests
     @Override
-    public Reply zscan(byte[] rawkey, byte[] cursor, byte[][] attributes) throws RedisException {
+    public Reply zscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException {
         ScanCursor scanCursor = new ScanCursor(string(cursor), false);
         ScanArgs scanArgs = getScanArgs(attributes);
-        RedisFuture<ScoredValueScanCursor<byte[]>> future = getRedisClient().zscan(rawkey, scanCursor, scanArgs);
+        RedisFuture<ScoredValueScanCursor<byte[]>> future = getRedisClient().zscan(key, scanCursor, scanArgs);
         return new FutureReply<>(future, mapScanCursor -> new MultiBulkReply(new Reply[]{
                 BulkReply.bulkReply(mapScanCursor.getCursor()),
                 MultiBulkReply.fromScoreValues(mapScanCursor.getValues())}));
