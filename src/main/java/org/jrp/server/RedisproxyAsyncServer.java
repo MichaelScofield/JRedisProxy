@@ -783,22 +783,62 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, IntegerReply::new);
     }
 
-    // TODO parse "ZAddArgs": https://redis.io/commands/zadd/
     @Override
     public Reply zadd(byte[] key, byte[][] args) {
-        if (args.length % 2 != 0) {
-            return ErrorReply.SYNTAX_ERROR;
-        }
-        int len = args.length / 2;
-        //noinspection rawtypes
-        ScoredValue[] scoreValues = new ScoredValue[len];
-        for (int i = 0, j = 0; i < args.length; i += 2, j += 1) {
-            double score = toDouble(args[i]);
-            byte[] member = args[i + 1];
-            scoreValues[j] = ScoredValue.just(score, member);
+        ZAddArgs zAddArgs = new ZAddArgs();
+        List<ScoredValue<byte[]>> scoreValues = new ArrayList<>();
+        boolean hasNX = false;
+        boolean hasXX = false;
+        boolean hasGTorLT = false;
+        for (int i = 0; i < args.length; i++) {
+            try {
+                RedisKeyword keyword = convert(args[i]);
+                if (keyword == null) {
+                    double score = toDouble(args[i]);
+                    byte[] member = args[++i];
+                    scoreValues.add(ScoredValue.just(score, member));
+                } else {
+                    switch (keyword) {
+                        case NX -> {
+                            if (hasNX || hasXX) {
+                                return ErrorReply.SYNTAX_ERROR;
+                            }
+                            zAddArgs.nx();
+                            hasNX = true;
+                        }
+                        case XX -> {
+                            if (hasNX || hasXX) {
+                                return ErrorReply.SYNTAX_ERROR;
+                            }
+                            zAddArgs.xx();
+                            hasXX = true;
+                        }
+                        case GT -> {
+                            if (hasGTorLT || hasNX) {
+                                return ErrorReply.SYNTAX_ERROR;
+                            }
+                            zAddArgs.gt();
+                            hasGTorLT = true;
+                        }
+                        case LT -> {
+                            if (hasGTorLT || hasNX) {
+                                return ErrorReply.SYNTAX_ERROR;
+                            }
+                            zAddArgs.lt();
+                            hasGTorLT = true;
+                        }
+                        case CH -> zAddArgs.ch();
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.warn("unable to parse ZADD args: {}",
+                        Arrays.stream(args).map(BytesUtils::string).collect(Collectors.joining(", ")));
+                return ErrorReply.SYNTAX_ERROR;
+            }
         }
         //noinspection unchecked
-        RedisFuture<Long> future = getRedisClient().zadd(key, scoreValues);
+        ScoredValue<byte[]>[] scoredValuesArr = scoreValues.toArray(ScoredValue[]::new);
+        RedisFuture<Long> future = getRedisClient().zadd(key, zAddArgs, scoredValuesArr);
         return new FutureReply<>(future, IntegerReply::new);
     }
 

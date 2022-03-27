@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static org.jrp.utils.BytesUtils.bytes;
 import static org.junit.jupiter.api.Assertions.*;
 import static redis.clients.jedis.params.LPosParams.lPosParams;
+import static redis.clients.jedis.params.ZAddParams.zAddParams;
 
 public class RedisproxyAsyncServerTest {
 
@@ -921,6 +922,31 @@ public class RedisproxyAsyncServerTest {
         assertEquals(new Tuple("uno", 1d), tuples.get(1));
         assertEquals(new Tuple("two", 2d), tuples.get(2));
         assertEquals(new Tuple("three", 3d), tuples.get(3));
+
+        assertEquals(0, proxy.zadd(k, 100d, "uno", zAddParams().xx()));
+        assertEquals(0, proxy.zadd(k, 200d, "not-exist", zAddParams().xx()));
+        assertEquals(4, redis.zcard(k));
+        assertEquals(100, redis.zscore(k, "uno"));
+        assertNull(redis.zscore(k, "not-exist"));
+
+        assertEquals(1, proxy.zadd(k, 4d, "four", zAddParams().nx()));
+        assertEquals(0, proxy.zadd(k, -1d, "one", zAddParams().nx()));
+        assertEquals(5, redis.zcard(k));
+        assertEquals(4, redis.zscore(k, "four"));
+        assertEquals(1, redis.zscore(k, "one"));
+
+        assertEquals(0, proxy.zadd(k, 11d, "one", zAddParams().gt()));
+        assertEquals(0, proxy.zadd(k, 1d, "two", zAddParams().gt()));
+        assertEquals(11, redis.zscore(k, "one"));
+        assertEquals(2, redis.zscore(k, "two"));
+
+        assertEquals(0, proxy.zadd(k, 1d, "one", zAddParams().lt()));
+        assertEquals(0, proxy.zadd(k, 22d, "two", zAddParams().lt()));
+        assertEquals(1, redis.zscore(k, "one"));
+        assertEquals(2, redis.zscore(k, "two"));
+
+        assertEquals(2, proxy.zadd(k,
+                Map.of("five", 5d, "one", 1d, "uno", -1d), zAddParams().ch()));
     }
 
     @Test
