@@ -1052,12 +1052,29 @@ public class RedisproxyAsyncServerTest {
 
     @Test
     public void testZremrangebyscore() {
-        String k = getRandomString();
-        redis.zadd(k, Map.of("one", 1d, "two", 2d, "three", 3d));
-        assertEquals(2, proxy.zremrangeByScore(k, 1, 2));
+        String k1 = getRandomString();
+        String k2 = getRandomString();
+        String k3 = getRandomString();
+        redis.zadd(k1, Map.of("one", 1d, "two", 2d, "three", 3d));
+        redis.zadd(k2, Map.of("one", 1d, "two", 2d, "three", 3d));
+        redis.zadd(k3, Map.of("one", 1d, "two", 2d, "three", 3d));
+
+        assertEquals(2, proxy.zremrangeByScore(k1, 1, 2));
         assertArrayEquals(
                 new Tuple[]{new Tuple("three", 3d)},
-                redis.zrangeWithScores(k, 0, -1).toArray());
+                redis.zrangeWithScores(k1, 0, -1).toArray());
+
+        assertEquals(1, proxy.zremrangeByScore(k2, "(1", "2"));
+        assertArrayEquals(
+                new Tuple[]{new Tuple("one", 1d), new Tuple("three", 3d)},
+                redis.zrangeWithScores(k2, 0, -1).toArray());
+
+        assertEquals(0, proxy.zremrangeByScore(k3, "(1", "(2"));
+        assertArrayEquals(new Tuple[]{
+                        new Tuple("one", 1d),
+                        new Tuple("two", 2d),
+                        new Tuple("three", 3d)},
+                redis.zrangeWithScores(k3, 0, -1).toArray());
     }
 
     @Test

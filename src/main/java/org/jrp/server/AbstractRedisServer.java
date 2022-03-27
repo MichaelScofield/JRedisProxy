@@ -186,12 +186,12 @@ public abstract class AbstractRedisServer implements RedisServer {
         return RESET;
     }
 
-    Range<Number> createRange(byte[] min, byte[] max) {
+    Range<Double> createRange(byte[] min, byte[] max) {
         return Range.from(createBoundary(min), createBoundary(max));
     }
 
-    private Boundary<Number> createBoundary(byte[] bytes) {
-        Boundary<Number> boundary = Boundary.unbounded();
+    private Boundary<Double> createBoundary(byte[] bytes) {
+        Boundary<Double> boundary = Boundary.unbounded();
         if (bytes != null && bytes.length > 0) {
             boundary = bytes[0] == '(' ?
                     Boundary.excluding(toDouble(bytes, 1, bytes.length - 1)) :
