@@ -991,6 +991,14 @@ public class RedisproxyAsyncServerTest {
         assertEquals(2, tuples.size());
         assertEquals(new Tuple("one", 5d), tuples.get(0));
         assertEquals(new Tuple("two", 10d), tuples.get(1));
+
+        assertEquals(2, proxy.zinterstore(k3, params.aggregate(ZParams.Aggregate.MIN), k1, k2));
+        assertEquals(2, redis.zscore(k3, "one"));
+        assertEquals(4, redis.zscore(k3, "two"));
+
+        assertEquals(2, proxy.zinterstore(k3, params.aggregate(ZParams.Aggregate.MAX), k1, k2));
+        assertEquals(3, redis.zscore(k3, "one"));
+        assertEquals(6, redis.zscore(k3, "two"));
     }
 
     @Test

@@ -861,7 +861,6 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
-    // TODO lack of unit tests
     @Override
     public Reply zinterstore(byte[] destination, byte[] numkeysBytes, byte[][] args) throws RedisException {
         int numkeys = toInt(numkeysBytes);
