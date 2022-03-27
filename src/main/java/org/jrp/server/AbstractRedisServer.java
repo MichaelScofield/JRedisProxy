@@ -1,5 +1,7 @@
 package org.jrp.server;
 
+import io.lettuce.core.Range;
+import io.lettuce.core.Range.Boundary;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -17,8 +19,7 @@ import java.util.Arrays;
 import static org.jrp.exception.RedisException.NOT_IMPLEMENTED_ERROR;
 import static org.jrp.reply.SimpleStringReply.OK;
 import static org.jrp.reply.SimpleStringReply.RESET;
-import static org.jrp.utils.BytesUtils.string;
-import static org.jrp.utils.BytesUtils.toInt;
+import static org.jrp.utils.BytesUtils.*;
 
 public abstract class AbstractRedisServer implements RedisServer {
 
@@ -183,5 +184,19 @@ public abstract class AbstractRedisServer implements RedisServer {
     public final Reply reset() {
         // TODO Implement real reset: https://redis.io/commands/reset
         return RESET;
+    }
+
+    Range<Number> createRange(byte[] min, byte[] max) {
+        return Range.from(createBoundary(min), createBoundary(max));
+    }
+
+    private Boundary<Number> createBoundary(byte[] bytes) {
+        Boundary<Number> boundary = Boundary.unbounded();
+        if (bytes != null && bytes.length > 0) {
+            boundary = bytes[0] == '(' ?
+                    Boundary.excluding(toDouble(bytes, 1, bytes.length - 1)) :
+                    Boundary.including(toDouble(bytes));
+        }
+        return boundary;
     }
 }

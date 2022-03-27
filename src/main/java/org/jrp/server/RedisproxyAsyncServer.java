@@ -848,11 +848,10 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, IntegerReply::new);
     }
 
-    // TODO parse range like min = "(2"
     @Override
-    public Reply zcount(byte[] rawkey, byte[] min, byte[] max) {
-        Range<Number> range = Range.create(toDouble(min), toDouble(max));
-        RedisFuture<Long> future = getRedisClient().zcount(rawkey, range);
+    public Reply zcount(byte[] key, byte[] min, byte[] max) {
+        Range<Number> range = createRange(min, max);
+        RedisFuture<Long> future = getRedisClient().zcount(key, range);
         return new FutureReply<>(future, IntegerReply::new);
     }
 

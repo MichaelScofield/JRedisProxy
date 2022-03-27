@@ -1,15 +1,18 @@
 package org.jrp.utils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 public final class BytesUtils {
 
-    private static final byte[] NEG_INF = "-inf".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] POS_INF = "+inf".getBytes(StandardCharsets.UTF_8);
+    private static final String NEG_INF = "-inf";
+    private static final String POS_INF = "+inf";
 
     public static String string(byte[] bytes) {
         return bytes == null ? "null" : new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    public static String string(byte[] bytes, int offset, int length) {
+        return bytes == null ? "null" : new String(bytes, offset, length, StandardCharsets.UTF_8);
     }
 
     public static byte[] bytes(String string) {
@@ -31,12 +34,20 @@ public final class BytesUtils {
     }
 
     public static double toDouble(byte[] bytes) {
-        if (Arrays.equals(NEG_INF, bytes)) {
+        return toDouble(string(bytes));
+    }
+
+    public static double toDouble(byte[] bytes, int offset, int length) {
+        return toDouble(string(bytes, offset, length));
+    }
+
+    private static double toDouble(String s) {
+        if (NEG_INF.equals(s)) {
             return Double.NEGATIVE_INFINITY;
-        } else if (Arrays.equals(POS_INF, bytes)) {
+        } else if (POS_INF.equals(s)) {
             return Double.POSITIVE_INFINITY;
         } else {
-            return Double.parseDouble(string(bytes));
+            return Double.parseDouble(s);
         }
     }
 

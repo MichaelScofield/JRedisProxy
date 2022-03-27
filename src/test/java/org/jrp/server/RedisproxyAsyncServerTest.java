@@ -962,6 +962,8 @@ public class RedisproxyAsyncServerTest {
         redis.zadd(k, Map.of("one", 1d, "two", 2d, "three", 3d));
         assertEquals(3, proxy.zcount(k, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
         assertEquals(3, proxy.zcount(k, "-inf", "+inf"));
+        assertEquals(2, proxy.zcount(k, "(1", "3"));
+        assertEquals(1, proxy.zcount(k, "(1", "(3"));
     }
 
     @Test
