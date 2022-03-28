@@ -20,14 +20,18 @@ import redis.clients.jedis.resps.Slowlog;
 import redis.clients.jedis.resps.Tuple;
 
 import java.io.IOException;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static org.jrp.utils.BytesUtils.bytes;
 import static org.junit.jupiter.api.Assertions.*;
 import static redis.clients.jedis.params.LPosParams.lPosParams;
 import static redis.clients.jedis.params.ZAddParams.zAddParams;
+import static redis.clients.jedis.params.ZRangeParams.zrangeByLexParams;
+import static redis.clients.jedis.params.ZRangeParams.zrangeByScoreParams;
 
 public class RedisproxyAsyncServerTest {
 
@@ -1003,14 +1007,42 @@ public class RedisproxyAsyncServerTest {
 
     @Test
     public void testZrange() {
-        String k = getRandomString();
-        redis.zadd(k, Map.of("one", 1d, "two", 2d, "three", 3d));
-        assertArrayEquals(new String[]{"one", "two", "three"}, proxy.zrange(k, 0, -1).toArray());
-        assertArrayEquals(new String[]{"three"}, proxy.zrange(k, 2, 3).toArray());
-        assertArrayEquals(new String[]{"two", "three"}, proxy.zrange(k, -2, -1).toArray());
+        String k1 = getRandomString();
+        redis.zadd(k1, Map.of("one", 1d, "two", 2d, "three", 3d));
+        assertArrayEquals(new String[]{"one", "two", "three"}, proxy.zrange(k1, 0, -1).toArray());
+        assertArrayEquals(new String[]{"three"}, proxy.zrange(k1, 2, 3).toArray());
+        assertArrayEquals(new String[]{"two", "three"}, proxy.zrange(k1, -2, -1).toArray());
         assertArrayEquals(
                 new Tuple[]{new Tuple("one", 1d), new Tuple("two", 2d)},
-                proxy.zrangeWithScores(k, 0, 1).toArray());
+                proxy.zrangeWithScores(k1, 0, 1).toArray());
+
+        String k2 = getRandomString();
+        redis.zadd(k2, Map.of("one", 1d, "uno", 1d, "two", 2d, "three", 3d));
+        assertArrayEquals(new String[]{"one", "uno", "two"},
+                proxy.zrange(k2, zrangeByScoreParams(1d, 2d)).toArray());
+        assertArrayEquals(new String[]{"two", "uno", "one"},
+                proxy.zrange(k2, zrangeByScoreParams(2d, 1d).rev()).toArray());
+        assertArrayEquals(new String[]{"uno"},
+                proxy.zrange(k2, zrangeByScoreParams(2d, 1d).rev().limit(1, 1)).toArray());
+        assertArrayEquals(new String[]{"uno"},
+                proxy.zrange(k2, zrangeByScoreParams(2d, 1d).rev().limit(1, 1)).toArray());
+
+        String k3 = getRandomString();
+        //noinspection unchecked
+        redis.zadd(k3, Map.ofEntries(IntStream.range(0, 8)
+                .mapToObj(i -> new SimpleImmutableEntry<>(
+                        String.valueOf((char) ('a' + i)), 0d))
+                .toArray(Map.Entry[]::new)));
+        assertArrayEquals(new String[]{"a", "b", "c"}, proxy.zrange(k3, zrangeByLexParams("-", "[c")).toArray());
+        assertArrayEquals(new String[]{"c", "b", "a"}, proxy.zrange(k3, zrangeByLexParams("[c", "-").rev()).toArray());
+        assertArrayEquals(new String[]{"a", "b"}, proxy.zrange(k3, zrangeByLexParams("-", "(c")).toArray());
+        assertArrayEquals(new String[]{"b", "a"}, proxy.zrange(k3, zrangeByLexParams("(c", "-").rev()).toArray());
+        assertArrayEquals(new String[]{"b", "c", "d", "e", "f"},
+                proxy.zrange(k3, zrangeByLexParams("[aaa", "(g")).toArray());
+        assertArrayEquals(new String[]{"f", "e", "d", "c", "b"},
+                proxy.zrange(k3, zrangeByLexParams("(g", "[aaa").rev()).toArray());
+        assertArrayEquals(new String[]{"d", "c"},
+                proxy.zrange(k3, zrangeByLexParams("(g", "[aaa").rev().limit(2, 2)).toArray());
     }
 
     @Test

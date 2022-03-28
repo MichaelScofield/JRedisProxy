@@ -36,7 +36,7 @@ public interface RedisSortedSetServer {
     }
 
     @RWType(type = READ)
-    default Reply zrange(byte[] key, byte[] start, byte[] stop, byte[] withscores) {
+    default Reply zrange(byte[] key, byte[] min, byte[] max, byte[][] args) {
         return ErrorReply.NOT_IMPL;
     }
 

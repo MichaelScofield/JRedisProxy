@@ -850,7 +850,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
 
     @Override
     public Reply zcount(byte[] key, byte[] min, byte[] max) {
-        Range<Double> range = createRange(min, max);
+        Range<Double> range = newDoubleRange(min, max);
         RedisFuture<Long> future = getRedisClient().zcount(key, range);
         return new FutureReply<>(future, IntegerReply::new);
     }
@@ -908,18 +908,79 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return zStoreArgs;
     }
 
-    // TODO lack of unit tests
     @Override
-    public Reply zrange(byte[] rawkey, byte[] startBytes, byte[] stopBytes, byte[] withScores) {
+    public Reply zrange(byte[] key, byte[] min, byte[] max, byte[][] args) {
+        boolean isByScore = false;
+        boolean isByLex = false;
+        boolean isRev = false;
+        Limit limit = Limit.unlimited();
+        boolean isWithScores = false;
+        if (args != null) {
+            try {
+                for (int i = 0; i < args.length; i++) {
+                    byte[] arg = args[i];
+                    switch (RedisKeyword.convert(arg)) {
+                        case BYSCORE -> isByScore = true;
+                        case BYLEX -> isByLex = true;
+                        case REV -> isRev = true;
+                        case LIMIT -> limit = Limit.create(toLong(args[++i]), toLong(args[++i]));
+                        case WITHSCORES -> isWithScores = true;
+                        default -> {
+                            return ErrorReply.SYNTAX_ERROR;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.warn("unable to parse ZRANGE args: {}", Arrays.stream(args)
+                        .map(BytesUtils::string)
+                        .collect(Collectors.joining(", ")));
+                return ErrorReply.SYNTAX_ERROR;
+            }
+        }
+        if (isByScore && isByLex) {
+            return ErrorReply.SYNTAX_ERROR;
+        }
+        if (isByLex && isWithScores) {
+            return new ErrorReply("ERR syntax error, WITHSCORES not supported in combination with BYLEX");
+        }
+
         RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
-        long start = toLong(startBytes);
-        long stop = toLong(stopBytes);
-        if (RedisKeyword.convert(withScores) == RedisKeyword.WITHSCORES) {
-            RedisFuture<List<ScoredValue<byte[]>>> future = client.zrangeWithScores(rawkey, start, stop);
-            return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
-        } else {
-            RedisFuture<List<byte[]>> future = client.zrange(rawkey, start, stop);
+        if (isByScore) {
+            if (isWithScores) {
+                RedisFuture<List<ScoredValue<byte[]>>> future;
+                if (isRev) {
+                    future = client.zrevrangebyscoreWithScores(key, newDoubleRange(max, min), limit);
+                } else {
+                    future = client.zrangebyscoreWithScores(key, newDoubleRange(min, max), limit);
+                }
+                return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
+            } else {
+                RedisFuture<List<byte[]>> future;
+                if (isRev) {
+                    future = client.zrevrangebyscore(key, newDoubleRange(max, min), limit);
+                } else {
+                    future = client.zrangebyscore(key, newDoubleRange(min, max), limit);
+                }
+                return new FutureReply<>(future, MultiBulkReply::from);
+            }
+        } else if (isByLex) {
+            RedisFuture<List<byte[]>> future;
+            if (isRev) {
+                future = client.zrevrangebylex(key, newBytesRange(max, min), limit);
+            } else {
+                future = client.zrangebylex(key, newBytesRange(min, max), limit);
+            }
             return new FutureReply<>(future, MultiBulkReply::from);
+        } else {
+            long start = toLong(min);
+            long stop = toLong(max);
+            if (isWithScores) {
+                RedisFuture<List<ScoredValue<byte[]>>> future = client.zrangeWithScores(key, start, stop);
+                return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
+            } else {
+                RedisFuture<List<byte[]>> future = client.zrange(key, start, stop);
+                return new FutureReply<>(future, MultiBulkReply::from);
+            }
         }
     }
 
@@ -1006,7 +1067,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
 
     @Override
     public Reply zremrangebyscore(byte[] key, byte[] min, byte[] max) {
-        Range<Double> range = createRange(min, max);
+        Range<Double> range = newDoubleRange(min, max);
         RedisFuture<Long> future = getRedisClient().zremrangebyscore(key, range);
         return new FutureReply<>(future, IntegerReply::new);
     }
