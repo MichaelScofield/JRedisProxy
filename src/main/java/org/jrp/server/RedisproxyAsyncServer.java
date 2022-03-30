@@ -998,36 +998,6 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         }
     }
 
-    private record ScoreAttributes(boolean limit, boolean withScores, int offset, int count) {
-    }
-
-    private ScoreAttributes toScoreAttributes(byte[][] args) throws RedisException {
-        boolean isWithScores = false;
-        boolean hasLimit = false;
-        int offset = 0;
-        int count = Integer.MAX_VALUE;
-        for (int i = 0; i < args.length; i++) {
-            byte[] option = args[i];
-            RedisKeyword redisKeyword = RedisKeyword.convert(option);
-            switch (redisKeyword) {
-                case WITHSCORES -> isWithScores = true;
-                case LIMIT -> {
-                    hasLimit = true;
-                    if (++i >= args.length) {
-                        throw new RedisException("syntax error");
-                    }
-                    offset = toInt(args[i]);
-                    if (++i >= args.length) {
-                        throw new RedisException("syntax error");
-                    }
-                    count = toInt(args[i]);
-                }
-                default -> throw new RedisException("syntax error");
-            }
-        }
-        return new ScoreAttributes(hasLimit, isWithScores, offset, count);
-    }
-
     @Override
     public Reply zrangebyscore(byte[] key, byte[] min, byte[] max, byte[][] args) {
         return zrange(key, min, max, ArrayUtils.add(args, bytes(BYSCORE.name())));
@@ -1063,37 +1033,9 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return zrange(key, start, stop, bytes(REV.name()), withScores);
     }
 
-    // TODO lack of unit tests
-    // TODO parse range like min = "(2"
     @Override
-    public Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) throws RedisException {
-        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
-        Range<Double> range = Range.create(toDouble(min), toDouble(max));
-        if (args == null) {
-            RedisFuture<List<byte[]>> future = client.zrevrangebyscore(key, range);
-            return new FutureReply<>(future, MultiBulkReply::from);
-        }
-
-        ScoreAttributes scoreAttributes = toScoreAttributes(args);
-        if (scoreAttributes.withScores()) {
-            RedisFuture<List<ScoredValue<byte[]>>> future;
-            if (scoreAttributes.limit()) {
-                future = client.zrevrangebyscoreWithScores(key, range,
-                        Limit.create(scoreAttributes.offset(), scoreAttributes.count()));
-            } else {
-                future = client.zrevrangebyscoreWithScores(key, range);
-            }
-            return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
-        } else {
-            RedisFuture<List<byte[]>> future;
-            if (scoreAttributes.limit()) {
-                future = client.zrevrangebyscore(key, range,
-                        Limit.create(scoreAttributes.offset(), scoreAttributes.count()));
-            } else {
-                future = client.zrevrangebyscore(key, range);
-            }
-            return new FutureReply<>(future, MultiBulkReply::from);
-        }
+    public Reply zrevrangebyscore(byte[] key, byte[] max, byte[] min, byte[][] args) {
+        return zrange(key, max, min, ArrayUtils.addAll(args, bytes(REV.name()), bytes(BYSCORE.name())));
     }
 
     @Override
