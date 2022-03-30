@@ -910,7 +910,7 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
     }
 
     @Override
-    public Reply zrange(byte[] key, byte[] min, byte[] max, byte[][] args) {
+    public Reply zrange(byte[] key, byte[] min, byte[] max, byte[]... args) {
         boolean isByScore = false;
         boolean isByLex = false;
         boolean isRev = false;
@@ -920,6 +920,9 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             try {
                 for (int i = 0; i < args.length; i++) {
                     byte[] arg = args[i];
+                    if (arg == null) {
+                        continue;
+                    }
                     switch (RedisKeyword.convert(arg)) {
                         case BYSCORE -> isByScore = true;
                         case BYLEX -> isByLex = true;
@@ -976,10 +979,20 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
             long start = toLong(min);
             long stop = toLong(max);
             if (isWithScores) {
-                RedisFuture<List<ScoredValue<byte[]>>> future = client.zrangeWithScores(key, start, stop);
+                RedisFuture<List<ScoredValue<byte[]>>> future;
+                if (isRev) {
+                    future = client.zrevrangeWithScores(key, start, stop);
+                } else {
+                    future = client.zrangeWithScores(key, start, stop);
+                }
                 return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
             } else {
-                RedisFuture<List<byte[]>> future = client.zrange(key, start, stop);
+                RedisFuture<List<byte[]>> future;
+                if (isRev) {
+                    future = client.zrevrange(key, start, stop);
+                } else {
+                    future = client.zrange(key, start, stop);
+                }
                 return new FutureReply<>(future, MultiBulkReply::from);
             }
         }
@@ -1045,19 +1058,9 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, IntegerReply::new);
     }
 
-    // TODO replace with zrange: https://redis.io/commands/zrevrange/
     @Override
-    public Reply zrevrange(byte[] rawkey, byte[] startBytes, byte[] stopBytes, byte[] withScores) {
-        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
-        long start = toLong(startBytes);
-        long stop = toLong(stopBytes);
-        if (RedisKeyword.convert(withScores) == RedisKeyword.WITHSCORES) {
-            RedisFuture<List<ScoredValue<byte[]>>> future = client.zrevrangeWithScores(rawkey, start, stop);
-            return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
-        } else {
-            RedisFuture<List<byte[]>> future = client.zrevrange(rawkey, start, stop);
-            return new FutureReply<>(future, MultiBulkReply::from);
-        }
+    public Reply zrevrange(byte[] key, byte[] start, byte[] stop, byte[] withScores) {
+        return zrange(key, start, stop, bytes(REV.name()), withScores);
     }
 
     // TODO lack of unit tests
