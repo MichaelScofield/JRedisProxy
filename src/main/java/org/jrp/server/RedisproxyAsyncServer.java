@@ -2,6 +2,7 @@ package org.jrp.server;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1014,37 +1015,9 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new ScoreAttributes(hasLimit, isWithScores, offset, count);
     }
 
-    // TODO lack of unit tests
-    // TODO parse range like min = "(2"
     @Override
-    public Reply zrangebyscore(byte[] rawkey, byte[] min, byte[] max, byte[][] args) throws RedisException {
-        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
-        Range<Double> range = Range.create(toDouble(min), toDouble(max));
-        if (args == null) {
-            RedisFuture<List<byte[]>> future = client.zrangebyscore(rawkey, range);
-            return new FutureReply<>(future, MultiBulkReply::from);
-        }
-
-        ScoreAttributes scoreAttributes = toScoreAttributes(args);
-        if (scoreAttributes.withScores()) {
-            RedisFuture<List<ScoredValue<byte[]>>> future;
-            if (scoreAttributes.limit()) {
-                future = client.zrangebyscoreWithScores(rawkey, range,
-                        Limit.create(scoreAttributes.offset(), scoreAttributes.count()));
-            } else {
-                future = client.zrangebyscoreWithScores(rawkey, range);
-            }
-            return new FutureReply<>(future, MultiBulkReply::fromScoreValues);
-        } else {
-            RedisFuture<List<byte[]>> future;
-            if (scoreAttributes.limit()) {
-                future = client.zrangebyscore(rawkey, range,
-                        Limit.create(scoreAttributes.offset(), scoreAttributes.count()));
-            } else {
-                future = client.zrangebyscore(rawkey, range);
-            }
-            return new FutureReply<>(future, MultiBulkReply::from);
-        }
+    public Reply zrangebyscore(byte[] key, byte[] min, byte[] max, byte[][] args) {
+        return zrange(key, min, max, ArrayUtils.add(args, bytes(BYSCORE.name())));
     }
 
     @Override

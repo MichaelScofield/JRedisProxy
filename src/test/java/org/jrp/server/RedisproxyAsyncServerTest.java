@@ -1052,6 +1052,7 @@ public class RedisproxyAsyncServerTest {
         assertArrayEquals(new String[]{"one", "two", "three"},
                 proxy.zrangeByScore(k, "-inf", "+inf").toArray());
         assertArrayEquals(new String[]{"one", "two"}, proxy.zrangeByScore(k, 1, 2).toArray());
+        assertArrayEquals(new String[]{"two"}, proxy.zrangeByScore(k, "(1", "2").toArray());
     }
 
     @Test
