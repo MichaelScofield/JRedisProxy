@@ -16,6 +16,7 @@ import redis.clients.jedis.args.ListDirection;
 import redis.clients.jedis.args.ListPosition;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.params.*;
+import redis.clients.jedis.resps.ScanResult;
 import redis.clients.jedis.resps.Slowlog;
 import redis.clients.jedis.resps.Tuple;
 
@@ -1193,6 +1194,31 @@ public class RedisproxyAsyncServerTest {
     }
 
     @Test
+    public void testHscan() {
+        String k = getRandomString();
+        redis.hset(k, Map.of("f1a", "v1a", "f2a", "v2a", "f1b", "v1b", "f2b", "v2b"));
+        ScanResult<Map.Entry<String, String>> hscan1 = proxy.hscan(k, "0");
+        assertEquals("0", hscan1.getCursor());
+
+        List<Map.Entry<String, String>> result1 = hscan1.getResult();
+        result1.sort(Map.Entry.comparingByKey());
+        assertEquals(4, result1.size());
+        assertArrayEquals(new String[]{"f1a", "f1b", "f2a", "f2b"},
+                result1.stream().map(Map.Entry::getKey).toArray());
+        assertArrayEquals(new String[]{"v1a", "v1b", "v2a", "v2b"},
+                result1.stream().map(Map.Entry::getValue).toArray());
+
+        ScanResult<Map.Entry<String, String>> hscan2 =
+                proxy.hscan(k, "0", new ScanParams().match("*1*").count(10));
+        assertEquals("0", hscan2.getCursor());
+
+        List<Map.Entry<String, String>> result2 = hscan2.getResult();
+        assertEquals(2, result2.size());
+        assertArrayEquals(new String[]{"f1a", "f1b"}, result2.stream().map(Map.Entry::getKey).toArray());
+        assertArrayEquals(new String[]{"v1a", "v1b"}, result2.stream().map(Map.Entry::getValue).toArray());
+    }
+
+    @Test
     public void testHvals() {
         String k = getRandomString();
         redis.hset(k, Map.of("f1", "v1", "f2", "v2"));
@@ -1228,6 +1254,27 @@ public class RedisproxyAsyncServerTest {
     }
 
     @Test
+    public void testZscan() {
+        String k = getRandomString();
+        redis.zadd(k, Map.of("a1", 1d, "b1", 2d, "a2", 3d, "b2", 4d));
+        ScanResult<Tuple> zscan1 = proxy.zscan(k, "0");
+        assertEquals("0", zscan1.getCursor());
+
+        List<Tuple> result1 = zscan1.getResult();
+        assertEquals(4, result1.size());
+        assertArrayEquals(new String[]{"a1", "b1", "a2", "b2"}, result1.stream().map(Tuple::getElement).toArray());
+        assertArrayEquals(new Double[]{1d, 2d, 3d, 4d}, result1.stream().map(Tuple::getScore).toArray());
+
+        ScanResult<Tuple> zscan2 = proxy.zscan(k, "0", new ScanParams().match("a*").count(10));
+        assertEquals("0", zscan2.getCursor());
+
+        List<Tuple> result2 = zscan2.getResult();
+        assertEquals(2, result2.size());
+        assertArrayEquals(new String[]{"a1", "a2"}, result2.stream().map(Tuple::getElement).toArray());
+        assertArrayEquals(new Double[]{1d, 3d}, result2.stream().map(Tuple::getScore).toArray());
+    }
+
+    @Test
     public void testZscore() {
         String k = getRandomString();
         redis.zadd(k, Map.of("one", 1d, "two", 2d, "three", 3d));
@@ -1239,16 +1286,26 @@ public class RedisproxyAsyncServerTest {
         String k1 = getRandomString();
         String k2 = getRandomString();
         String k3 = getRandomString();
-        redis.zadd(k1, Map.of("one", 1d, "two", 2d));
-        redis.zadd(k2, Map.of("one", 1d, "two", 2d, "three", 3d));
+        redis.zadd(k1, Map.of("a", 1d, "b", 2d));
+        redis.zadd(k2, Map.of("a", 1d, "b", 2d, "c", 3d));
         ZParams params = new ZParams();
         params.weights(2, 3);
         assertEquals(3, proxy.zunionstore(k3, params, k1, k2));
         List<Tuple> tuples = redis.zrangeWithScores(k3, 0, -1);
         assertEquals(3, tuples.size());
-        assertEquals(new Tuple("one", 5d), tuples.get(0));
-        assertEquals(new Tuple("three", 9d), tuples.get(1));
-        assertEquals(new Tuple("two", 10d), tuples.get(2));
+        assertEquals(new Tuple("a", 5d), tuples.get(0));
+        assertEquals(new Tuple("c", 9d), tuples.get(1));
+        assertEquals(new Tuple("b", 10d), tuples.get(2));
+
+        assertEquals(3, proxy.zunionstore(k3, params.aggregate(ZParams.Aggregate.MIN), k1, k2));
+        assertEquals(2, redis.zscore(k3, "a"));
+        assertEquals(4, redis.zscore(k3, "b"));
+        assertEquals(9, redis.zscore(k3, "c"));
+
+        assertEquals(3, proxy.zunionstore(k3, params.aggregate(ZParams.Aggregate.MAX), k1, k2));
+        assertEquals(3, redis.zscore(k3, "a"));
+        assertEquals(6, redis.zscore(k3, "b"));
+        assertEquals(9, redis.zscore(k3, "c"));
     }
 
     @Test

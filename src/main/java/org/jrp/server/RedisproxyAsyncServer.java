@@ -1094,7 +1094,6 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, MultiBulkReply::from);
     }
 
-    // TODO lack of unit tests
     @Override
     public Reply hscan(byte[] key, byte[] cursor, byte[][] args) throws RedisException {
         ScanCursor scanCursor = new ScanCursor(string(cursor), false);
@@ -1159,30 +1158,20 @@ public class RedisproxyAsyncServer extends AbstractRedisServer {
         return new FutureReply<>(future, BulkReply::bulkReply);
     }
 
-    // TODO lack of unit tests
     @Override
     public Reply zunionstore(byte[] destination, byte[] numkeysBytes, byte[][] args) throws RedisException {
-        RedisAsyncCommands<byte[], byte[]> client = getRedisClient();
         int numkeys = toInt(numkeysBytes);
-        RedisFuture<Long> future;
-        if (args.length == numkeys) {
-            future = client.zunionstore(destination, args);
-        } else if (args.length > numkeys) {
-            ZStoreArgs zStoreArgs = getZStoreArgs(numkeys, args);
-            byte[][] keys = new byte[numkeys][];
-            System.arraycopy(args, 0, keys, 0, numkeys);
-            future = client.zunionstore(destination, zStoreArgs, keys);
-        } else {
-            throw RedisException.SYNTAX_ERROR;
-        }
+        ZStoreArgs zStoreArgs = getZStoreArgs(numkeys, args);
+        byte[][] keys = new byte[numkeys][];
+        System.arraycopy(args, 0, keys, 0, numkeys);
+        RedisFuture<Long> future = getRedisClient().zunionstore(destination, zStoreArgs, keys);
         return new FutureReply<>(future, IntegerReply::new);
     }
 
-    // TODO lack of unit tests
     @Override
-    public Reply zscan(byte[] key, byte[] cursor, byte[][] attributes) throws RedisException {
+    public Reply zscan(byte[] key, byte[] cursor, byte[][] args) throws RedisException {
         ScanCursor scanCursor = new ScanCursor(string(cursor), false);
-        ScanArgs scanArgs = getScanArgs(attributes);
+        ScanArgs scanArgs = getScanArgs(args);
         RedisFuture<ScoredValueScanCursor<byte[]>> future = getRedisClient().zscan(key, scanCursor, scanArgs);
         return new FutureReply<>(future, mapScanCursor -> new MultiBulkReply(new Reply[]{
                 BulkReply.bulkReply(mapScanCursor.getCursor()),
