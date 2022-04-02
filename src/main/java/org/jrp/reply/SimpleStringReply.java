@@ -11,7 +11,6 @@ public class SimpleStringReply implements Reply {
     public static final SimpleStringReply QUEUED = new SimpleStringReply("QUEUED");
     public static final SimpleStringReply QUIT = new SimpleStringReply("OK");
     public static final SimpleStringReply PONG = new SimpleStringReply("PONG");
-    public static final SimpleStringReply RESET = new SimpleStringReply("RESET");
 
     private final byte[] status;
 

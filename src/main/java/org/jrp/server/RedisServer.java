@@ -31,10 +31,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
         return QUIT;
     }
 
-    default Reply reset() {
-        return ErrorReply.NOT_IMPL;
-    }
-
     default Reply select(byte[] index) {
         return ErrorReply.NOT_IMPL;
     }
@@ -56,10 +52,6 @@ public interface RedisServer extends RedisStringServer, RedisBitmapServer, Redis
     }
 
     default Reply dbsize() {
-        return ErrorReply.NOT_IMPL;
-    }
-
-    default Reply failover(byte[][] options) {
         return ErrorReply.NOT_IMPL;
     }
 

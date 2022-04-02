@@ -18,7 +18,6 @@ import java.util.Arrays;
 
 import static org.jrp.exception.RedisException.NOT_IMPLEMENTED_ERROR;
 import static org.jrp.reply.SimpleStringReply.OK;
-import static org.jrp.reply.SimpleStringReply.RESET;
 import static org.jrp.utils.BytesUtils.*;
 
 public abstract class AbstractRedisServer implements RedisServer {
@@ -49,7 +48,6 @@ public abstract class AbstractRedisServer implements RedisServer {
         ClientStat stat = ClientStat.getStat(RedisServerContext.getChannel());
         switch (RedisKeyword.convert(args[0])) {
             case LIST:
-                // TODO Handle more "CLIENT LIST" options.
                 LOGGER.warn("start handling \"CLIENT LIST\" command from {}",
                         RedisServerContext.getCommand().getClientAddress());
                 return new AsyncReply<>(() -> BulkReply.bulkReply(ClientStat.list()));
@@ -64,20 +62,14 @@ public abstract class AbstractRedisServer implements RedisServer {
             case INFO:
                 return BulkReply.bulkReply(stat.dump());
             case KILL:
-                // TODO Implement "CLIENT KILL" command.
             case PAUSE:
             case UNPAUSE:
-                // TODO Implement "CLIENT PAUSE and UNPAUSE" command.
             case REPLY:
-                // TODO Implement "CLIENT REPLY" command.
             case UNBLOCK:
-                // TODO Implement "CLIENT UNBLOCK" command.
             case CACHING:
             case GETREDIR:
             case TRACKING:
             case TRACKINGINFO:
-                // TODO How to implement Redis client side caching related commands?
-                //  ref: https://redis.io/topics/client-side-caching
             default:
                 return ErrorReply.NOT_IMPL;
         }
@@ -114,8 +106,6 @@ public abstract class AbstractRedisServer implements RedisServer {
         return ErrorReply.NOT_IMPL;
     }
 
-    // TODO Select some unchangeable proxy configs such as "port" or "name"
-    //  to return Redis error "ERR Unsupported CONFIG parameter: xxx"
     private Reply configSet(byte[][] args) throws RedisException {
         String parameter = string(args[1]);
         String value = string(args[2]);
@@ -161,29 +151,15 @@ public abstract class AbstractRedisServer implements RedisServer {
     }
 
     @Override
-    public Reply failover(byte[][] options) {
-        // TODO Implement "FAILOVER" command: https://redis.io/commands/failover
-        return ErrorReply.NOT_IMPL;
-    }
-
-    @Override
     public final Reply command(byte[] subcommand, byte[][] options) {
         if (subcommand == null) {
-            // TODO Implement the "COMMAND" command: https://redis.io/commands/command (after everything has done).
             return ErrorReply.NOT_IMPL;
         }
         return switch (RedisKeyword.convert(subcommand)) {
             case COUNT -> IntegerReply.integer(CommandProcessors.count());
-            // TODO Implement all these "COMMAND" subcommands.
             case DOCS, GETKEYS, GETKEYSANDFLAGS, INFO, LIST -> throw NOT_IMPLEMENTED_ERROR;
             default -> ErrorReply.SYNTAX_ERROR;
         };
-    }
-
-    @Override
-    public final Reply reset() {
-        // TODO Implement real reset: https://redis.io/commands/reset
-        return RESET;
     }
 
     Range<Double> newDoubleRange(byte[] min, byte[] max) {
