@@ -57,11 +57,6 @@ public class CommandProcessors {
         }
     }
 
-    // TODO:
-    //  1. benchmark
-    //  2. reorder hot commands upfront automatically
-    //  3. refactor with Trie-Tree
-
     /**
      * side effects: 'name' will be uppercased.
      */
