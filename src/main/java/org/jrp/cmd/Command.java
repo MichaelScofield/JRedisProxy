@@ -54,7 +54,6 @@ public class Command {
         this.clientAddress = clientAddress;
     }
 
-    // TODO Try to eliminate these arguments' creation.
     public Object[] toArguments(Class<?>[] types) {
         Object[] arguments = new Object[types.length];
         for (int i = 0, j = 1; i < types.length && j < tokens.length; i++, j++) {
