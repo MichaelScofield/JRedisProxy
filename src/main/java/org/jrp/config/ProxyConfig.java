@@ -12,8 +12,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Map;
 
-// TODO using Spring to inject ProxyConfig
-// TODO supply documents
 public class ProxyConfig {
 
     private static final int DEFAULT_PORT = 16379;
