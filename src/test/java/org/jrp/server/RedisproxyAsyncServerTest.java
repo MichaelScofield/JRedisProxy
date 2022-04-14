@@ -1214,8 +1214,8 @@ public class RedisproxyAsyncServerTest {
 
         List<Map.Entry<String, String>> result2 = hscan2.getResult();
         assertEquals(2, result2.size());
-        assertArrayEquals(new String[]{"f1a", "f1b"}, result2.stream().map(Map.Entry::getKey).toArray());
-        assertArrayEquals(new String[]{"v1a", "v1b"}, result2.stream().map(Map.Entry::getValue).toArray());
+        assertArrayEquals(new String[]{"f1a", "f1b"}, result2.stream().map(Map.Entry::getKey).sorted().toArray());
+        assertArrayEquals(new String[]{"v1a", "v1b"}, result2.stream().map(Map.Entry::getValue).sorted().toArray());
     }
 
     @Test
