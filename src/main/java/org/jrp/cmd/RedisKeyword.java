@@ -4,6 +4,8 @@ import org.jrp.utils.BytesUtils;
 
 import java.util.Arrays;
 
+// Caution: Adding a new Redis keyword must preserve the lexical ordering,
+// because we use binary search to find it, see the 'convert' method.
 public enum RedisKeyword {
 
     AFTER,
@@ -64,8 +66,8 @@ public enum RedisKeyword {
     SET,
     SETNAME,
     STORE,
-    SYNC,
     SUM,
+    SYNC,
     TRACKING,
     TRACKINGINFO,
     UNBLOCK,
@@ -83,17 +85,26 @@ public enum RedisKeyword {
     }
 
     /**
-     * 把byte数组转换成RedisKeyword. byte数组会变成全大写, 使用后要小心.
+     * side effect: 'name' will be upper-cased
      */
-    // TODO: Optimized to binary search.
     public static RedisKeyword convert(byte[] name) {
         if (name == null) {
             return null;
         }
         BytesUtils.toAsciiUppercase(name);
-        for (RedisKeyword keyword : RedisKeyword.values()) {
-            if (Arrays.equals(keyword.name, name)) {
-                return keyword;
+
+        RedisKeyword[] keywords = RedisKeyword.values();
+        int l = 0, h = keywords.length - 1;
+        while (l <= h) {
+            int m = (l + h) >>> 1;
+            int c = Arrays.compare(keywords[m].name, name);
+            if (c == 0) {
+                return keywords[m];
+            }
+            if (c < 0) {
+                l = m + 1;
+            } else {
+                h = m - 1;
             }
         }
         return null;
