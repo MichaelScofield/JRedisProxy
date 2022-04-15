@@ -137,15 +137,15 @@ public class RedisCommandHandlerTest {
 
         Command command = new Command(new byte[][]{bytes("GET"), bytes("foo")});
         TimeUnit.SECONDS.sleep(1);
-        long discardedBefore = RedisproxyMetrics.getCurrent().discarded.get();
+        long dropCmdBefore = RedisproxyMetrics.getCurrent().dropCmd.get();
 
         channel.writeInbound(command);
         channel.flush();
         Reply reply = channel.readOutbound();
         assertNull(reply);
 
-        long discardedAfter = RedisproxyMetrics.getCurrent().discarded.get();
-        assertEquals(discardedBefore + 1, discardedAfter);
+        long dropCmdAfter = RedisproxyMetrics.getCurrent().dropCmd.get();
+        assertEquals(dropCmdBefore + 1, dropCmdAfter);
     }
 
     @Test

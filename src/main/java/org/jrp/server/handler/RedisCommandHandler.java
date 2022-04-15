@@ -129,7 +129,7 @@ public class RedisCommandHandler extends SimpleChannelInboundHandler<Command> {
         if (proxyTimeout > 0) {
             long cmdQueuedTime = cmd.getCommandLifecycle().getTimeCostsFromNowInMicroseconds(NEW);
             if (cmdQueuedTime / 1000 > proxyTimeout) {
-                RedisproxyMetrics.getCurrent().discarded.incr();
+                RedisproxyMetrics.getCurrent().dropCmd.incr();
                 return null;
             }
         }
@@ -150,7 +150,7 @@ public class RedisCommandHandler extends SimpleChannelInboundHandler<Command> {
         if (socket == null) {
             // According to 'remoteAddress' javadoc, we can ...
             LOGGER.warn("Discard command " + cmd.toShortString() + " because remote channel is not connected.");
-            RedisproxyMetrics.getCurrent().discarded.incr();
+            RedisproxyMetrics.getCurrent().dropCmd.incr();
             return false;
         }
         if (socket instanceof InetSocketAddress inetSocket) {
@@ -266,10 +266,10 @@ public class RedisCommandHandler extends SimpleChannelInboundHandler<Command> {
                     }
                 });
             } else {
-                RedisproxyMetrics.getCurrent().discarded.incr();
+                RedisproxyMetrics.getCurrent().dropReply.incr();
             }
         } else {
-            RedisproxyMetrics.getCurrent().discarded.incr();
+            RedisproxyMetrics.getCurrent().dropReply.incr();
         }
         if (reply == QUIT) {
             if (Monitor.hasMonitor()) {

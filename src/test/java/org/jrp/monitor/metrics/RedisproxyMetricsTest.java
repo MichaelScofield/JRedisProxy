@@ -55,7 +55,8 @@ public class RedisproxyMetricsTest {
     @Test
     public void testGetTitle() {
         String title = RedisproxyMetrics.getCurrent().getTitle();
-        assertEquals("RECV      PROC_READ   PROC_WRITE  PROC_OTHER  SENT      DISCARD   " +
+        assertEquals("RECV      PROC_READ   PROC_WRITE  PROC_OTHER  SENT      " +
+                "DROP_CMD  DROP_REPLY  " +
                 "BYTES_IN    BYTES_OUT   " +
                 "ERR_PROTO   ERR_PROXY   " +
                 "SLOW_EXEC  CONN_RST", title);

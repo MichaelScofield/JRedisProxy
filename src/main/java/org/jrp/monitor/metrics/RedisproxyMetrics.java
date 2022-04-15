@@ -13,13 +13,15 @@ public class RedisproxyMetrics implements Metrics {
         return HOLDER.getCurrent();
     }
 
-    private static final String FORMAT = "%-8s  %-10s  %-10s  %-10s  %-8s  %-8s  " +
+    private static final String FORMAT = "%-8s  %-10s  %-10s  %-10s  %-8s  " +
+            "%-8s  %-10s  " +
             "%-10s  %-10s  " +
             "%-10s  %-10s  " +
             "%-8s  %-8s";
 
     private static final String TITLE = String.format(FORMAT,
-            "RECV", "PROC_READ", "PROC_WRITE", "PROC_OTHER", "SENT", "DISCARD",
+            "RECV", "PROC_READ", "PROC_WRITE", "PROC_OTHER", "SENT",
+            "DROP_CMD", "DROP_REPLY",
             "BYTES_IN", "BYTES_OUT",
             "ERR_PROTO", "ERR_PROXY",
             "SLOW_EXEC", "CONN_RST");
@@ -34,8 +36,9 @@ public class RedisproxyMetrics implements Metrics {
 
     public final LongCounter sent;
 
-    // TODO split "discarded" to "discardReq" and "discardReply"
-    public final LongCounter discarded;
+    public final LongCounter dropCmd;
+
+    public final LongCounter dropReply;
 
     public final LongCounter bytesIn;
 
@@ -55,7 +58,8 @@ public class RedisproxyMetrics implements Metrics {
         procWrite = CounterFactory.createLongCounter();
         procOther = CounterFactory.createLongCounter();
         sent = CounterFactory.createLongCounter();
-        discarded = CounterFactory.createLongCounter();
+        dropCmd = CounterFactory.createLongCounter();
+        dropReply = CounterFactory.createLongCounter();
         bytesIn = CounterFactory.createLongCounter();
         bytesOut = CounterFactory.createLongCounter();
         errProtocol = CounterFactory.createLongCounter();
@@ -72,7 +76,8 @@ public class RedisproxyMetrics implements Metrics {
     @Override
     public String getStat() {
         return String.format(FORMAT,
-                recv.get(), procRead.get(), procWrite.get(), procOther.get(), sent.get(), discarded.get(),
+                recv.get(), procRead.get(), procWrite.get(), procOther.get(), sent.get(),
+                dropCmd.get(), dropReply.get(),
                 StringUtils.removeEnd(FileUtils.byteCountToDisplaySize(bytesIn.get()), "bytes"),
                 StringUtils.removeEnd(FileUtils.byteCountToDisplaySize(bytesOut.get()), "bytes"),
                 errProtocol.get(), errProxy.get(),
